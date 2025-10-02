@@ -10,11 +10,14 @@ import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
 import { useUser, User } from '../contexts/UserContext';
 import { CommonActions } from '@react-navigation/native';
+import { getCurrentScenario } from '../data/scenarioManager';
+import { loadMockData, getMockNotifications } from '../data/mockData';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 interface Props { navigation: LoginScreenNavigationProp; }
 
-const mockStoredCredentials = {
+// Fallback credentials if scenario not loaded
+const fallbackCredentials = {
   cpf: "123.456.789-00",
   password: "12345678",
   userData: {
@@ -30,7 +33,7 @@ const MAX_ATTEMPTS = 3;
 const LOCKOUT_DURATION = 30;
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const { login } = useUser();
+  const { login, setInitialNotifications } = useUser();
   const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
   const [rememberCpf, setRememberCpf] = useState(false);
@@ -49,6 +52,15 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       }
     };
     loadSavedCpf();
+
+    // Auto-fill with scenario data for demo mode
+    const loadScenarioData = async () => {
+      const scenario = await getCurrentScenario();
+      setCpf(scenario.user.cpf);
+      setPassword('12345678');
+      setRememberCpf(true);
+    };
+    loadScenarioData();
   }, []);
 
   useEffect(() => {
@@ -83,13 +95,37 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setError('');
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (cpf === mockStoredCredentials.cpf && password === mockStoredCredentials.password) {
+    // Load scenario data
+    const scenario = await getCurrentScenario();
+    const scenarioCpf = scenario.user.cpf;
+    const defaultPassword = "12345678"; // All scenarios use this password for simplicity
+
+    // Use scenario data if available, otherwise fallback
+    const validCpf = scenarioCpf || fallbackCredentials.cpf;
+    const validPassword = defaultPassword;
+
+    if (cpf === validCpf && password === validPassword) {
       if (rememberCpf) {
         await AsyncStorage.setItem('savedCpf', cpf);
       } else {
         await AsyncStorage.removeItem('savedCpf');
       }
-      login(mockStoredCredentials.userData);
+
+      // Load mock data from scenario
+      await loadMockData();
+      const notifications = getMockNotifications();
+
+      // Create user data from scenario
+      const userData: User = {
+        name: scenario.user.nome,
+        hashAA: scenario.user.aa_address,
+        cpf: scenario.user.cpf,
+        email: scenario.user.email,
+        dateOfBirth: scenario.user.dataNascimento,
+      };
+
+      login(userData);
+      setInitialNotifications(notifications);
       navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'App' }] }));
     } else {
       const newAttempts = attempts + 1;

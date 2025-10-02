@@ -1,12 +1,13 @@
 // src/screens/ConfirmDataScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import CustomButton from '../components/CustomButton';
 import { colors, spacing, typography } from '../theme/theme';
 import { User } from '../contexts/UserContext';
+import { getCurrentScenario } from '../data/scenarioManager';
 
 type ConfirmDataScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ConfirmData'>;
 interface Props { navigation: ConfirmDataScreenNavigationProp; }
@@ -22,13 +23,31 @@ const mockInvitedUserData: User = {
 
 const ConfirmDataScreen: React.FC<Props> = ({ navigation }) => {
   const [cpfConfirmation, setCpfConfirmation] = useState('');
+  const [userData, setUserData] = useState<User>(mockInvitedUserData);
+
+  useEffect(() => {
+    // Auto-fill with scenario data for demo mode
+    const loadScenarioData = async () => {
+      const scenario = await getCurrentScenario();
+      const scenarioUserData: User = {
+        name: scenario.user.nome,
+        hashAA: scenario.user.aa_address,
+        cpf: scenario.user.cpf,
+        email: scenario.user.email,
+        dateOfBirth: scenario.user.dataNascimento,
+      };
+      setUserData(scenarioUserData);
+      setCpfConfirmation(scenario.user.cpf);
+    };
+    loadScenarioData();
+  }, []);
   
   const handleConfirm = () => {
     // CORREÇÃO: Valida contra os 5 primeiros dígitos do CPF
     const enteredCpf = cpfConfirmation.replace(/\D/g, '').slice(0, 11);
-    const mockCpf = mockInvitedUserData.cpf.replace(/\D/g, '').slice(0, 11);
-    if (enteredCpf === mockCpf) {
-      navigation.navigate('CreatePassword', { userData: mockInvitedUserData });
+    const expectedCpf = userData.cpf.replace(/\D/g, '').slice(0, 11);
+    if (enteredCpf === expectedCpf) {
+      navigation.navigate('CreatePassword', { userData });
     } else {
       Alert.alert("Confirmação Falhou", "Os dígitos do CPF não conferem. Por favor, tente novamente.");
     }
@@ -51,8 +70,8 @@ const ConfirmDataScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.detailsContainer}>
           {/* CORREÇÃO: Dados agora em texto claro, sem mascaramento */}
-          <DetailRow label="Nome Completo" value={mockInvitedUserData.name} />
-          <DetailRow label="E-mail" value={mockInvitedUserData.email} />
+          <DetailRow label="Nome Completo" value={userData.name} />
+          <DetailRow label="E-mail" value={userData.email} />
         </View>
 
         <View style={styles.challengeContainer}>

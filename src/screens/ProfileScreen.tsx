@@ -1,11 +1,12 @@
 // src/screens/ProfileScreen.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useUser } from '../contexts/UserContext';
 import { colors, spacing, typography } from '../theme/theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomButton from '../components/CustomButton';
+import { Ionicons } from '@expo/vector-icons';
 
 // Tipagem para a navegação
 type ProfileScreenNavigationProp = NativeStackNavigationProp<any>;
@@ -38,15 +39,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.headerTitle}>Meu Perfil</Text>
       </View>
       <ScrollView contentContainerStyle={styles.container}>
-        <Image
-          source={{ uri: `https://i.pravatar.cc/150?u=${user.hashAA}` }}
-          style={styles.avatar}
-        />
-        <CustomButton 
-          title="Trocar Foto de Perfil"
-          onPress={handlePhotoChange}
-          style={styles.changePhotoButton}
-        />
+        <View style={styles.avatarIcon}>
+          <Ionicons name="person" size={80} color={colors.white} />
+        </View>
         
         <View style={styles.detailsContainer}>
           <DetailRow label="Nome Completo" value={user.name} />
@@ -66,8 +61,17 @@ const styles = StyleSheet.create({
   backButton: { color: colors.primary, fontSize: 16, fontWeight: 'bold' },
   headerTitle: { ...typography.title, fontSize: 20, color: colors.text, textAlign: 'center', flex: 1 },
   container: { alignItems: 'center', padding: spacing.large },
-  avatar: { width: 150, height: 150, borderRadius: 75, borderWidth: 4, borderColor: colors.primary, marginBottom: spacing.medium },
-  changePhotoButton: { width: '80%', marginBottom: spacing.xlarge },
+  avatarIcon: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 4,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    marginBottom: spacing.xlarge,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   detailsContainer: { width: '100%', backgroundColor: colors.white, borderRadius: 8, padding: spacing.medium },
   detailRow: { paddingVertical: spacing.medium, borderBottomWidth: 1, borderBottomColor: colors.background },
   detailLabel: { fontSize: 14, color: colors.welcomeText, marginBottom: 4 },

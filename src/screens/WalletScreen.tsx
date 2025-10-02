@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useUser } from '../contexts/UserContext';
-import { mockUserTokens, UserToken } from '../data/mockData';
+import { getMockUserTokens, UserToken } from '../data/mockData';
 import { colors, spacing, typography } from '../theme/theme';
 import { WalletStackParamList } from '../../App';
 
@@ -14,11 +14,11 @@ interface Props { navigation: WalletScreenNavigationProp; }
 // NOVO: Definimos os tipos de filtro possíveis
 type FilterStatus = 'Total' | 'Válidos' | 'Expirados/Revogados';
 
-// Mock da chamada RPC (sem alteração)
+// Mock da chamada RPC - now uses scenario data
 const mockGetUserTokens = async (hashAA: string): Promise<UserToken[]> => {
   console.log('Buscando tokens para o usuário:', hashAA);
   await new Promise(resolve => setTimeout(resolve, 1500));
-  return mockUserTokens;
+  return getMockUserTokens();
 };
 
 const WalletScreen: React.FC<Props> = ({ navigation }) => {

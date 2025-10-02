@@ -1,7 +1,7 @@
 // src/screens/OnboardingScreen.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity } from 'react-native'; 
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomButton from '../components/CustomButton';
 import AppLogo from '../components/AppLogo';
@@ -16,7 +16,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     // NAVEGA PARA A NOVA TELA DE CONFIRMAÇÃO DE DADOS
     navigation.navigate('ConfirmData');
   };
-  
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />

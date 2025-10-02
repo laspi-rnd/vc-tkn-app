@@ -1,6 +1,6 @@
 // src/screens/CreatePasswordScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import AppLogo from '../components/AppLogo'; // Import do Logo
 import { colors, spacing, typography } from '../theme/theme';
 import { useUser, User } from '../contexts/UserContext';
 import { CommonActions } from '@react-navigation/native';
+import { loadMockData, getMockNotifications } from '../data/mockData';
 
 type CreatePasswordScreenRouteProp = RouteProp<RootStackParamList, 'CreatePassword'>;
 type CreatePasswordScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CreatePassword'>;
@@ -25,10 +26,16 @@ const BackgroundArt = () => (
 
 const CreatePasswordScreen: React.FC<Props> = ({ route, navigation }) => {
   const { userData } = route.params;
-  const { login } = useUser();
+  const { login, setInitialNotifications } = useUser();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Auto-fill password for demo mode
+    setPassword('12345678');
+    setConfirmPassword('12345678');
+  }, []);
 
   const handleCreateAccount = async () => {
     if (!password || !confirmPassword) {
@@ -46,9 +53,15 @@ const CreatePasswordScreen: React.FC<Props> = ({ route, navigation }) => {
 
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 3500));
-    const finalUserData: User = { ...userData, hashAA: '0x_newly_created_hash_123' };
+
+    // Load mock data from scenario
+    await loadMockData();
+    const notifications = getMockNotifications();
+
+    const finalUserData: User = { ...userData, hashAA: userData.hashAA || '0x_newly_created_hash_123' };
 
     login(finalUserData);
+    setInitialNotifications(notifications);
     setIsLoading(false);
 
     navigation.dispatch(

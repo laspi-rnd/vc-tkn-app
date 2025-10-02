@@ -1,0 +1,199 @@
+{
+  "id": "ppe-citizen",
+  "name": "Cliente PPE",
+  "description": "Cliente identificado como Pessoa Politicamente Exposta",
+  "expectedOutcome": "REJECT",
+  "user": {
+    "cpf": "987.654.321-00",
+    "dataNascimento": "1970-08-22",
+    "nome": "Maria Oliveira Costa",
+    "rg": "98.765.432-1",
+    "endereco": {
+      "rua": "Esplanada dos Ministérios",
+      "numero": "Bloco A",
+      "bairro": "Zona Cívico-Administrativa",
+      "cidade": "Brasília",
+      "estado": "DF",
+      "cep": "70050-900"
+    },
+    "profissao": "Servidora Pública",
+    "empresa": "Governo Federal",
+    "rendaMensal": 35000,
+    "telefone": "(61) 99876-5432",
+    "email": "maria.oliveira@gov.br",
+    "aa_address": "0xabcdef1234567890abcdef1234567890abcdef12",
+    "walletExistente": true
+  },
+  "kycResults": {
+    "identificacao": {
+      "status": "VALIDO",
+      "documento": "RG",
+      "dataEmissao": "2023-06-10",
+      "issuer": "Banco XYZ",
+      "issueDate": "2023-06-10",
+      "expiryDate": "2025-06-10",
+      "tokenId": "kyc_id_002",
+      "hash": "0xppe111222333"
+    },
+    "endereco": {
+      "status": "VALIDO",
+      "comprovante": "Conta de luz",
+      "dataEmissao": "2024-09-15",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-09-15",
+      "expiryDate": "2025-09-15",
+      "tokenId": "kyc_end_002",
+      "hash": "0xppe444555666"
+    },
+    "renda": {
+      "status": "VALIDO",
+      "valor": 35000,
+      "fonte": "Contracheque",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-07-20",
+      "expiryDate": "2025-07-20",
+      "tokenId": "kyc_renda_002",
+      "hash": "0xppe777888999"
+    },
+    "profissao": {
+      "status": "VALIDO",
+      "cargo": "Servidora Pública",
+      "empresa": "Governo Federal",
+      "issuer": "Banco XYZ",
+      "issueDate": "2023-12-01",
+      "expiryDate": "2024-12-01",
+      "tokenId": "kyc_prof_002",
+      "hash": "0xppeaaabbbccc"
+    }
+  },
+  "operationTokenResults": {
+    "negativado_dividas": {
+      "resultado": "SEM_RESTRICOES",
+      "bureaus": ["SPC", "Serasa"]
+    },
+    "reputacao_credito": {
+      "resultado": "ACEITAVEL",
+      "score": 780,
+      "fonte": "Registrato"
+    },
+    "ppe_internacional": {
+      "resultado": "CONSTA",
+      "paises": ["BR"]
+    },
+    "ppe_relacionado": {
+      "resultado": "CONSTA"
+    },
+    "listas_restritivas": {
+      "resultado": "NAO_CONSTA",
+      "listas": ["OFAC", "UN"]
+    },
+    "programas_sociais": {
+      "resultado": "NAO_CONSTA",
+      "programas": []
+    },
+    "beneficios_federais": {
+      "resultado": "NAO_CONSTA",
+      "beneficios": []
+    },
+    "sancoes_federais": {
+      "resultado": "NAO_CONSTA",
+      "orgaos": ["CGU", "TCU"]
+    },
+    "validacao_renda_online": {
+      "resultado": "SUFICIENTE",
+      "rendaMensal": 35000
+    },
+    "risco_geografico": {
+      "resultado": "BAIXO",
+      "regiao": "Brasília - DF"
+    },
+    "risco_atividade": {
+      "resultado": "BAIXO",
+      "atividade": "Serviço Público"
+    }
+  },
+  "authorizationRequests": {
+    "avaliacao_credito": {
+      "id": "auth_req_ppe_001",
+      "title": "Análise de Crédito Pessoal",
+      "institutionName": "Banco XYZ",
+      "institutionHash": "0xIF_XYZ_12345",
+      "requestType": "query",
+      "description": "Para avaliar sua solicitação de crédito, conceda acesso aos seguintes tokens.",
+      "requestedTokens": [
+        { "id": "identificacao_documentacao", "name": "Identificação e Documentação Pessoal", "description": "Documentação válida e verificada", "isRequired": true },
+        { "id": "profissao", "name": "Token de Profissão", "description": "Confirmação da atuação no mercado", "isRequired": true },
+        { "id": "comprovante_residencia", "name": "Comprovante de Residência", "description": "Endereço válido e verificável", "isRequired": true },
+        { "id": "comprovacao_renda", "name": "Comprovação de Renda", "description": "Renda declarada com validação online", "isRequired": true },
+        { "id": "negativado_dividas", "name": "Negativado em Dívidas Anteriores", "description": "Status de crédito sem restrição relevante", "isRequired": true },
+        { "id": "reputacao_credito", "name": "Reputação de Crédito (Registrato)", "description": "Score/registro consolidado de crédito aceitável", "isRequired": true }
+      ]
+    },
+    "cambio": {
+      "id": "auth_req_ppe_002",
+      "title": "Operação de Câmbio",
+      "institutionName": "Banco XYZ",
+      "institutionHash": "0xIF_XYZ_12345",
+      "requestType": "query",
+      "description": "Para validar sua troca de moeda, conceda acesso aos seguintes tokens.",
+      "requestedTokens": [
+        { "id": "identificacao_documentacao", "name": "Identificação e Documentação Pessoal", "description": "Documentação válida e verificada", "isRequired": true },
+        { "id": "profissao", "name": "Token de Profissão", "description": "Atuação no mercado", "isRequired": true },
+        { "id": "comprovante_residencia", "name": "Comprovante de Residência", "description": "Endereço válido e verificável", "isRequired": true },
+        { "id": "comprovacao_renda_ppe", "name": "Comprovação de Renda / PPE", "description": "Pessoa física empregada / prova de renda", "isRequired": true },
+        { "id": "ppe_internacional", "name": "PPE Internacional", "description": "Pessoa Politicamente Exposta Internacional", "isRequired": true },
+        { "id": "ppe_relacionado", "name": "PPE Relacionado", "description": "Pessoa Politicamente Exposta Relacionada", "isRequired": true },
+        { "id": "listas_restritivas", "name": "Situação em Listas Restritivas", "description": "Listas de controle/embargos", "isRequired": true },
+        { "id": "programas_sociais", "name": "Situação em Programas Sociais", "description": "Verificação de programas sociais", "isRequired": true },
+        { "id": "beneficios_federais", "name": "Situação em Benefícios Federais", "description": "Verificação de benefícios federais", "isRequired": true },
+        { "id": "sancoes_federais", "name": "Situação em Sanções Federais", "description": "Verificação de sanções federais", "isRequired": true },
+        { "id": "validacao_renda_online", "name": "Validação Online de Renda", "description": "Validação online de renda", "isRequired": false },
+        { "id": "risco_geografico", "name": "Risco Geográfico", "description": "Classificação do local do cliente", "isRequired": false },
+        { "id": "risco_atividade", "name": "Risco de Atividade", "description": "Atividade econômica do cliente", "isRequired": false }
+      ]
+    }
+  },
+  "userTokens": [
+    {
+      "id": "token_kyc_ppe_001",
+      "type": "KYC",
+      "status": "Válido",
+      "issuer": "Banco XYZ",
+      "issueDate": "2023-06-10",
+      "expiryDate": "2025-06-10",
+      "complianceResult": "Aprovado",
+      "notes": "Cliente identificado como PPE - requer análise adicional",
+      "technicalDetails": {
+        "tokenId": "kyc_id_002",
+        "hash": "0xppe111222333"
+      }
+    },
+    {
+      "id": "token_prof_ppe_001",
+      "type": "Profissão",
+      "status": "Válido",
+      "issuer": "Banco XYZ",
+      "issueDate": "2023-12-01",
+      "expiryDate": "2024-12-01",
+      "complianceResult": "Aprovado",
+      "notes": "Servidora pública - alto nível",
+      "technicalDetails": {
+        "tokenId": "kyc_prof_002",
+        "hash": "0xppeaaabbbccc"
+      }
+    },
+    {
+      "id": "token_renda_ppe_001",
+      "type": "Comprovante de Renda",
+      "status": "Válido",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-07-20",
+      "expiryDate": "2025-07-20",
+      "complianceResult": "Aprovado",
+      "technicalDetails": {
+        "tokenId": "kyc_renda_002",
+        "hash": "0xppe777888999"
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 // src/screens/HomeScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, spacing, typography } from '../theme/theme';
@@ -11,6 +11,7 @@ import UserDetailsModal from '../components/UserDetailsModal';
 import { HomeStackParamList } from '../../App';
 import AppIcon from '../components/AppIcon';
 import NotificationIcon from '../components/NotificationIcon';
+import { Ionicons } from '@expo/vector-icons';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
 interface Props { navigation: HomeScreenNavigationProp; }
@@ -33,7 +34,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       { text: "Cancelar", style: "cancel" },
       { text: "Sair", onPress: () => {
           logout();
-          rootNavigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Onboarding' }] }));
+          rootNavigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'ScenarioPicker' }] }));
         }, style: 'destructive' }
     ]);
   };
@@ -63,7 +64,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerContainer}>
           <TouchableOpacity style={styles.profileTouchable} onPress={() => navigation.navigate('Profile')}>
-            <Image source={{ uri: `https://i.pravatar.cc/150?u=${user.hashAA}` }} style={styles.avatar} />
+            <View style={styles.avatarIcon}>
+              <Ionicons name="person" size={32} color={colors.white} />
+            </View>
             <View>
               <Text style={styles.greetingText}>Olá,</Text>
               <Text style={styles.greetingName}>{user.name}!</Text>
@@ -87,7 +90,17 @@ const styles = StyleSheet.create({
   container: { padding: spacing.large },
   headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.large },
   profileTouchable: { flexDirection: 'row', alignItems: 'center' },
-  avatar: { width: 60, height: 60, borderRadius: 30, marginRight: spacing.medium, borderWidth: 2, borderColor: colors.primary },
+  avatarIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: spacing.medium,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   greetingText: { fontSize: 18, color: colors.welcomeText },
   greetingName: { ...typography.title, fontSize: 24, color: colors.text },
   logoutButton: { padding: spacing.small },

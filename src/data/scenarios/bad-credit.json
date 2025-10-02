@@ -1,0 +1,157 @@
+{
+  "id": "bad-credit",
+  "name": "Cliente com Restrições",
+  "description": "Cliente com score baixo e dívidas em aberto",
+  "expectedOutcome": "REJECT",
+  "user": {
+    "cpf": "456.789.123-45",
+    "dataNascimento": "1992-11-30",
+    "nome": "Carlos Pereira Lima",
+    "rg": "45.678.912-3",
+    "endereco": {
+      "rua": "Rua das Flores",
+      "numero": "456",
+      "bairro": "Jardim Primavera",
+      "cidade": "Campinas",
+      "estado": "SP",
+      "cep": "13090-000"
+    },
+    "profissao": "Vendedor",
+    "empresa": "Comércio Local",
+    "rendaMensal": 3500,
+    "telefone": "(19) 97654-3210",
+    "email": "carlos.pereira@email.com",
+    "aa_address": "0x7890abcdef1234567890abcdef1234567890abcd",
+    "walletExistente": false
+  },
+  "kycResults": {
+    "identificacao": {
+      "status": "VALIDO",
+      "documento": "RG",
+      "dataEmissao": "2024-03-20",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-03-20",
+      "expiryDate": "2026-03-20",
+      "tokenId": "kyc_id_003",
+      "hash": "0xbad111222333"
+    },
+    "endereco": {
+      "status": "VALIDO",
+      "comprovante": "Conta de água",
+      "dataEmissao": "2024-09-05",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-09-05",
+      "expiryDate": "2025-09-05",
+      "tokenId": "kyc_end_003",
+      "hash": "0xbad444555666"
+    },
+    "renda": {
+      "status": "VALIDO",
+      "valor": 3500,
+      "fonte": "Holerite",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-08-10",
+      "expiryDate": "2025-08-10",
+      "tokenId": "kyc_renda_003",
+      "hash": "0xbad777888999"
+    },
+    "profissao": {
+      "status": "VALIDO",
+      "cargo": "Vendedor",
+      "empresa": "Comércio Local",
+      "issuer": "Banco XYZ",
+      "issueDate": "2024-06-15",
+      "expiryDate": "2025-06-15",
+      "tokenId": "kyc_prof_003",
+      "hash": "0xbadaaabbbccc"
+    }
+  },
+  "operationTokenResults": {
+    "negativado_dividas": {
+      "resultado": "RESTRICOES_ENCONTRADAS",
+      "bureaus": ["SPC", "Serasa"]
+    },
+    "reputacao_credito": {
+      "resultado": "INACEITAVEL",
+      "score": 420,
+      "fonte": "Registrato"
+    },
+    "ppe_internacional": {
+      "resultado": "NAO_CONSTA",
+      "paises": ["BR"]
+    },
+    "ppe_relacionado": {
+      "resultado": "NAO_CONSTA"
+    },
+    "listas_restritivas": {
+      "resultado": "NAO_CONSTA",
+      "listas": ["OFAC", "UN"]
+    },
+    "programas_sociais": {
+      "resultado": "NAO_CONSTA",
+      "programas": []
+    },
+    "beneficios_federais": {
+      "resultado": "NAO_CONSTA",
+      "beneficios": []
+    },
+    "sancoes_federais": {
+      "resultado": "NAO_CONSTA",
+      "orgaos": ["CGU", "TCU"]
+    },
+    "validacao_renda_online": {
+      "resultado": "SUFICIENTE",
+      "rendaMensal": 3500
+    },
+    "risco_geografico": {
+      "resultado": "BAIXO",
+      "regiao": "Campinas - SP"
+    },
+    "risco_atividade": {
+      "resultado": "BAIXO",
+      "atividade": "Comércio"
+    }
+  },
+  "authorizationRequests": {
+    "avaliacao_credito": {
+      "id": "auth_req_bad_001",
+      "title": "Análise de Crédito Pessoal",
+      "institutionName": "Banco XYZ",
+      "institutionHash": "0xIF_XYZ_12345",
+      "requestType": "issuance",
+      "description": "Para avaliar sua solicitação de crédito, emita os seguintes tokens.",
+      "requestedTokens": [
+        { "id": "identificacao_documentacao", "name": "Identificação e Documentação Pessoal", "description": "Documentação válida e verificada", "isRequired": true },
+        { "id": "profissao", "name": "Token de Profissão", "description": "Confirmação da atuação no mercado", "isRequired": true },
+        { "id": "comprovante_residencia", "name": "Comprovante de Residência", "description": "Endereço válido e verificável", "isRequired": true },
+        { "id": "comprovacao_renda", "name": "Comprovação de Renda", "description": "Renda declarada com validação online", "isRequired": true },
+        { "id": "negativado_dividas", "name": "Negativado em Dívidas Anteriores", "description": "Status de crédito sem restrição relevante", "isRequired": true },
+        { "id": "reputacao_credito", "name": "Reputação de Crédito (Registrato)", "description": "Score/registro consolidado de crédito aceitável", "isRequired": true }
+      ]
+    },
+    "cambio": {
+      "id": "auth_req_bad_002",
+      "title": "Operação de Câmbio",
+      "institutionName": "Banco XYZ",
+      "institutionHash": "0xIF_XYZ_12345",
+      "requestType": "issuance",
+      "description": "Para validar sua troca de moeda, emita os seguintes tokens.",
+      "requestedTokens": [
+        { "id": "identificacao_documentacao", "name": "Identificação e Documentação Pessoal", "description": "Documentação válida e verificada", "isRequired": true },
+        { "id": "profissao", "name": "Token de Profissão", "description": "Atuação no mercado", "isRequired": true },
+        { "id": "comprovante_residencia", "name": "Comprovante de Residência", "description": "Endereço válido e verificável", "isRequired": true },
+        { "id": "comprovacao_renda_ppe", "name": "Comprovação de Renda / PPE", "description": "Pessoa física empregada / prova de renda", "isRequired": true },
+        { "id": "ppe_internacional", "name": "PPE Internacional", "description": "Pessoa Politicamente Exposta Internacional", "isRequired": true },
+        { "id": "ppe_relacionado", "name": "PPE Relacionado", "description": "Pessoa Politicamente Exposta Relacionada", "isRequired": true },
+        { "id": "listas_restritivas", "name": "Situação em Listas Restritivas", "description": "Listas de controle/embargos", "isRequired": true },
+        { "id": "programas_sociais", "name": "Situação em Programas Sociais", "description": "Verificação de programas sociais", "isRequired": true },
+        { "id": "beneficios_federais", "name": "Situação em Benefícios Federais", "description": "Verificação de benefícios federais", "isRequired": true },
+        { "id": "sancoes_federais", "name": "Situação em Sanções Federais", "description": "Verificação de sanções federais", "isRequired": true },
+        { "id": "validacao_renda_online", "name": "Validação Online de Renda", "description": "Validação online de renda", "isRequired": false },
+        { "id": "risco_geografico", "name": "Risco Geográfico", "description": "Classificação do local do cliente", "isRequired": false },
+        { "id": "risco_atividade", "name": "Risco de Atividade", "description": "Atividade econômica do cliente", "isRequired": false }
+      ]
+    }
+  },
+  "userTokens": []
+}

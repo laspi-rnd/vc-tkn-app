@@ -1,10 +1,11 @@
 // src/data/mockData.ts
 
 import { AuthorizationRequest } from '../contexts/UserContext';
+import { getCurrentScenario } from './scenarioManager';
 
 export interface UserToken {
   id: string;
-  type: 'KYC' | 'PEP' | 'Score de Crédito';
+  type: string; // Changed from union type to string for flexibility with scenarios
   status: 'Válido' | 'Expirado' | 'Revogado';
   issuer: string;
   issueDate: string;
@@ -17,6 +18,25 @@ export interface UserToken {
   };
 }
 
+// Load tokens from current scenario
+let _cachedTokens: UserToken[] | null = null;
+let _cachedNotifications: AuthorizationRequest[] | null = null;
+
+export const loadMockData = async () => {
+  const scenario = await getCurrentScenario();
+  _cachedTokens = scenario.userTokens;
+  _cachedNotifications = Object.values(scenario.authorizationRequests);
+};
+
+export const getMockUserTokens = (): UserToken[] => {
+  return _cachedTokens || [];
+};
+
+export const getMockNotifications = (): AuthorizationRequest[] => {
+  return _cachedNotifications || [];
+};
+
+// Fallback data if scenario not loaded
 export const mockUserTokens: UserToken[] = [
   {
     id: 'token_101',

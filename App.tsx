@@ -13,6 +13,7 @@ import { UserToken, AuthorizationRequest } from './src/data/mockData';
 // Componentes e Telas
 import { TabIcon } from './src/components/TabIcons';
 import { colors } from './src/theme/theme';
+import ScenarioPickerScreen from './src/screens/ScenarioPickerScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -70,8 +71,8 @@ const AppTabNavigator = () => (
   </Tab.Navigator>
 );
 
-// --- NAVEGADOR RAIZ (sem alterações) ---
-export type RootStackParamList = { Onboarding: undefined; Login: undefined; OnboardingError: undefined; ConfirmData: undefined; CreatePassword: { userData: User; }; App: undefined; };
+// --- NAVEGADOR RAIZ ---
+export type RootStackParamList = { ScenarioPicker: undefined; Onboarding: undefined; Login: undefined; OnboardingError: undefined; ConfirmData: undefined; CreatePassword: { userData: User; }; App: undefined; };
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
@@ -80,7 +81,8 @@ export default function App() {
     <SafeAreaProvider>
       <UserProvider>
         <NavigationContainer>
-          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="ScenarioPicker">
+            <RootStack.Screen name="ScenarioPicker" component={ScenarioPickerScreen} />
             <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
             <RootStack.Screen name="Login" component={LoginScreen} />
             <RootStack.Screen name="OnboardingError" component={OnboardingErrorScreen} />
