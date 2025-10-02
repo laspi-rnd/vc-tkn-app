@@ -25,8 +25,9 @@ const ConfirmDataScreen: React.FC<Props> = ({ navigation }) => {
   
   const handleConfirm = () => {
     // CORREÇÃO: Valida contra os 5 primeiros dígitos do CPF
-    const firstFiveDigits = mockInvitedUserData.cpf.replace(/\D/g, '').slice(0, 5);
-    if (cpfConfirmation === firstFiveDigits) {
+    const enteredCpf = cpfConfirmation.replace(/\D/g, '').slice(0, 11);
+    const mockCpf = mockInvitedUserData.cpf.replace(/\D/g, '').slice(0, 11);
+    if (enteredCpf === mockCpf) {
       navigation.navigate('CreatePassword', { userData: mockInvitedUserData });
     } else {
       Alert.alert("Confirmação Falhou", "Os dígitos do CPF não conferem. Por favor, tente novamente.");
@@ -52,22 +53,46 @@ const ConfirmDataScreen: React.FC<Props> = ({ navigation }) => {
           {/* CORREÇÃO: Dados agora em texto claro, sem mascaramento */}
           <DetailRow label="Nome Completo" value={mockInvitedUserData.name} />
           <DetailRow label="E-mail" value={mockInvitedUserData.email} />
-          <DetailRow label="Data de Nascimento" value={mockInvitedUserData.dateOfBirth} />
         </View>
 
         <View style={styles.challengeContainer}>
           {/* CORREÇÃO: Desafio alterado para os 5 primeiros dígitos */}
-          <Text style={styles.challengeLabel}>Para sua segurança, digite os 5 primeiros dígitos do seu CPF:</Text>
+          <Text style={styles.challengeLabel}>Para continuar, insira seu CPF:</Text>
           <TextInput
             style={styles.input}
             keyboardType="number-pad"
-            maxLength={5}
+            maxLength={14}
             value={cpfConfirmation}
-            onChangeText={setCpfConfirmation}
-            placeholder="12345"
+            onChangeText={text => {
+              // Remove tudo que não for número
+              let cleaned = text.replace(/\D/g, '');
+              // Limita a 11 dígitos
+              cleaned = cleaned.slice(0, 11);
+              // Aplica a máscara xxx.xxx.xxx-xx
+              let formatted = cleaned;
+              if (cleaned.length > 3) {
+          formatted = cleaned.slice(0, 3) + '.' + cleaned.slice(3);
+              }
+              if (cleaned.length > 6) {
+          formatted = formatted.slice(0, 7) + '.' + formatted.slice(7);
+              }
+              if (cleaned.length > 9) {
+          formatted = formatted.slice(0, 11) + '-' + formatted.slice(11);
+              }
+              setCpfConfirmation(formatted);
+            }}
+            placeholder="xxx.xxx.xxx-xx"
+            textAlign="center"
+            selection={{
+              start: cpfConfirmation.length,
+              end: cpfConfirmation.length,
+            }}
           />
         </View>
 
+        <Text style={[styles.subtitle, { marginBottom: 10, opacity: 0.8 }]}>
+          Ao confirmar, você concorda com a criação de uma Credencial Verificável, conforme Termos de Uso e Política de Privacidade.
+        </Text>
         <CustomButton title="Confirmar e Continuar" onPress={handleConfirm} />
       </ScrollView>
     </SafeAreaView>
@@ -93,8 +118,8 @@ const styles = StyleSheet.create({
   challengeLabel: { ...typography.body, textAlign: 'center', color: colors.text, marginBottom: spacing.medium },
   input: {
     height: 50,
-    width: 120, // Aumentado para 5 dígitos
-    borderColor: '#ccc',
+    width: 225, // Aumentado para 5 dígitos
+    borderColor: 'rgba(204,204,204,0.5)', // cinza meio transparente
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,

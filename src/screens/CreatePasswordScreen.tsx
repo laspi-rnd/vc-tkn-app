@@ -45,7 +45,7 @@ const CreatePasswordScreen: React.FC<Props> = ({ route, navigation }) => {
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 3500));
     const finalUserData: User = { ...userData, hashAA: '0x_newly_created_hash_123' };
 
     login(finalUserData);
