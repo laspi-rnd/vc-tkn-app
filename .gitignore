@@ -39,3 +39,11 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Nix/direnv
+.direnv/
+.direnv.cache
+result
+result-*
+
+CLAUDE.md
