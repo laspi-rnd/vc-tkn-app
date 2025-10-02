@@ -18,8 +18,8 @@ const mockStoredCredentials = {
   cpf: "123.456.789-00",
   password: "12345678",
   userData: {
-    name: "Leandro Assis",
-    hashAA: '0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r',
+    name: "Joaquim Ferreira",
+    hashAA: `0x${Math.random().toString(16).substring(2, 42)}`,
     cpf: "123.456.789-00",
     email: "leandro.assis@email.com",
     dateOfBirth: "15/08/1990"

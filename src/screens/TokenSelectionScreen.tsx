@@ -24,7 +24,7 @@ interface Props {
 
 const mockAuthorizeIf = async (ifHash: string, authorizedTokens: string[]): Promise<{ success: boolean }> => {
   await new Promise(resolve => setTimeout(resolve, 2000));
-  const shouldSucceed = Math.random() > 0.5;
+  const shouldSucceed = Math.random() > 0.1;
   return { success: shouldSucceed };
 };
 
