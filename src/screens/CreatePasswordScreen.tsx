@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: colors.white,
     marginBottom: spacing.medium,
+    color: '#000',
   },
   buttonContainer: {
     width: '100%',

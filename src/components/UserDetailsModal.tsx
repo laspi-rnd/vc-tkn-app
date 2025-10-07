@@ -1,8 +1,8 @@
 // src/components/UserDetailsModal.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, SafeAreaView } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+// REMOVIDO: A importação do QRCode não é mais necessária
 import { User } from '../contexts/UserContext';
 import { colors, spacing, typography } from '../theme/theme';
 
@@ -35,20 +35,15 @@ const UserDetailsModal: React.FC<Props> = ({ visible, onClose, user }) => {
           
           <Text style={styles.modalTitle}>Sua Identidade Digital</Text>
           
-          <View style={styles.qrContainer}>
-            <QRCode
-              value={user.hashAA}
-              size={180}
-              backgroundColor={colors.white}
-              color={colors.text}
-            />
-          </View>
+          {/* REMOVIDO: O container e o componente QRCode que estavam aqui foram retirados */}
           
-          <DetailRow label="Hash da Conta" value={user.hashAA} />
-          <DetailRow label="Nome Completo" value={user.name} />
-          <DetailRow label="CPF" value={user.cpf} />
-          <DetailRow label="E-mail" value={user.email} />
-          <DetailRow label="Data de Nascimento" value={user.dateOfBirth} />
+          <ScrollView style={{ width: '100%' }}>
+            <DetailRow label="Hash da Conta" value={user.hashAA} />
+            <DetailRow label="Nome Completo" value={user.name} />
+            <DetailRow label="CPF" value={user.cpf} />
+            <DetailRow label="E-mail" value={user.email} />
+            <DetailRow label="Data de Nascimento" value={user.dateOfBirth} />
+          </ScrollView>
 
         </View>
       </SafeAreaView>
@@ -65,6 +60,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '90%',
+    maxHeight: '70%', // Limita a altura do modal
     backgroundColor: colors.white,
     borderRadius: 16,
     padding: spacing.large,
@@ -80,6 +76,7 @@ const styles = StyleSheet.create({
     top: spacing.medium,
     right: spacing.medium,
     padding: 8,
+    zIndex: 1,
   },
   closeButtonText: {
     fontSize: 20,
@@ -91,12 +88,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: spacing.large,
     color: colors.text
-  },
-  qrContainer: {
-    marginBottom: spacing.large,
-    padding: 10,
-    backgroundColor: colors.white,
-    borderRadius: 8,
   },
   detailRow: {
     width: '100%',

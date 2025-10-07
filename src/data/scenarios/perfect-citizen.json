@@ -76,7 +76,7 @@
       "resultado": "ACEITAVEL",
       "score": 850,
       "fonte": "Registrato"
-    },
+    },  
     "ppe_internacional": {
       "resultado": "NAO_CONSTA",
       "paises": ["USA", "UK", "BR"]

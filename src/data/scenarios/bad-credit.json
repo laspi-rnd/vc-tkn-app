@@ -113,6 +113,22 @@
     }
   },
   "authorizationRequests": {
+    "onboarding_kyc": {
+      "id": "auth_req_bad_000",
+      "title": "Onboarding KYC Inicial",
+      "institutionName": "Banco XYZ",
+      "institutionHash": "0xIF_XYZ_12345",
+      "requestType": "issuance",
+      "description": "Para avaliar sua solicitação de crédito, emita os seguintes tokens.",
+      "requestedTokens": [
+        { "id": "t_consulta_kyc", "name": "Identidade", "description": "Confirma seu nome e CPF.", "isRequired": true },
+        { "id": "t_consulta_profissao", "name": "Profissão", "description": "Informa sua profissão.", "isRequired": true },
+        { "id": "t_consulta_residencia", "name": "Residência", "description": "Informa seu endereço.", "isRequired": true },
+        { "id": "t_consulta_renda", "name": "Comprovante de Renda", "description": "Informa sua renda.", "isRequired": true },
+        { "id": "t_consulta_pep", "name": "Pessoa Publicamente Exposta (PPE)", "description": "Informa se você é uma pessoa publicamente exposta.", "isRequired": true },
+        { "id": "t_consulta_listas", "name": "Listas Restritivas", "description": "Verifica se você está em alguma lista restritiva.", "isRequired": true }
+      ]
+    },
     "avaliacao_credito": {
       "id": "auth_req_bad_001",
       "title": "Análise de Crédito Pessoal",
