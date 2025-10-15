@@ -1,9 +1,7 @@
 // src/screens/HomeScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-// 1. IMPORTADO: Alert, para a caixa de diálogo de confirmação
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Image, Alert } from 'react-native';
-// 2. IMPORTADO: Hooks de navegação para resetar o fluxo do app
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, spacing, typography } from '../theme/theme';
@@ -15,6 +13,9 @@ import { HomeStackParamList } from '../../App';
 import AppIcon from '../components/AppIcon';
 import NotificationIcon from '../components/NotificationIcon';
 
+import { save, getValueFor } from '../services/secureStorage';
+import { getMyAccount, authorizeIF, verifyAuthorizationRequest } from '../services/rpc';
+
 type HomeScreenNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
 interface Props { navigation: HomeScreenNavigationProp; }
 
@@ -24,13 +25,28 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [isDetailsModalVisible, setDetailsModalVisible] = useState(false);
   const [isScannerVisible, setScannerVisible] = useState(false);
   
-  useEffect(() => {
-    if (notifications.length === 0) {
-      setInitialNotifications(mockNotifications);
-    }
+  useEffect(async () => {
+    const checkFirstLogin = async () => {
+      const hashAA_If = await getValueFor('hashAAIF');
+      if (hashAA_If) {
+        // Se existir, significa que é o primeiro login após a criação da conta
+        // então submete a autorização para a IF
+        const result = await authorizeIF(hashAA_If);
+        if (result.success) {
+          Alert.alert("Conta Ativada", "Sua conta foi ativada com sucesso!");
+        } else {
+          Alert.alert("Erro", "Houve um problema ao ativar sua conta. Tente novamente mais tarde.");
+        }
+        // Remove o hashAA_If após a verificação para não repetir esse processo
+         await save('hashAAIF', '');
+      }
+    };
+
+    checkFirstLogin();
+
+      setInitialNotifications(await verifyAuthorizationRequest());
   }, []);
 
-  // 3. RESTAURADO: A lógica completa da função de logout
   const handleLogout = () => {
     Alert.alert(
       "Sair da Conta",

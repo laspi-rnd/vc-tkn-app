@@ -71,12 +71,15 @@ const AppTabNavigator = () => (
 );
 
 // --- NAVEGADOR RAIZ (ATUALIZADO) ---
+type UserDataFromLink = Omit<User, 'hashAA' | 'email'>;
+type UserDataForRegistration = Omit<User, 'hashAA'>;
+
 export type RootStackParamList = { 
   Onboarding: undefined; 
   Login: undefined; 
   OnboardingError: undefined; 
-  ConfirmData: { hashIF: string, callbackUrl: string }; 
-  CreatePassword: { userData: Omit<User, 'hashAA'> }; 
+  ConfirmData: { userData: UserDataFromLink };
+  CreatePassword: { userData: UserDataForRegistration }; 
   App: undefined; 
 };
 const RootStack = createNativeStackNavigator<RootStackParamList>();

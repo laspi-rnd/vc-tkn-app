@@ -1,16 +1,35 @@
 // src/screens/OnboardingScreen.tsx
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native'; 
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
+import { jwtDecode } from 'jwt-decode';
+import { Buffer } from 'buffer'; // Necessário para a decodificação base64 do JWT
+global.Buffer = Buffer; // Polyfill global
+
 import CustomButton from '../components/CustomButton';
 import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
 import { RootStackParamList } from '../../App';
+import { User } from '../contexts/UserContext';
 
 type OnboardingScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
 interface Props { navigation: OnboardingScreenNavigationProp; }
+
+// Mock de uma função que criaria um JWT (apenas para simulação do botão)
+const createMockJwt = (data: any) => {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
+  const payload = Buffer.from(JSON.stringify(data)).toString('base64');
+  return `${header}.${payload}.mock_signature`;
+};
+
+// Dados para a simulação do deep link
+const mockLinkData = {
+  name: "Joaquim Ferreira",
+  cpf: "12345678900", // CPF sem formatação
+  dateOfBirth: "1990-08-15"
+};
 
 const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   
@@ -20,22 +39,40 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     if (initialUrl) {
       console.log("Deep link inicial recebido:", initialUrl);
       const { queryParams } = Linking.parse(initialUrl);
-      if (queryParams?.hashIF && queryParams?.callbackUrl) {
-        navigation.navigate('ConfirmData', {
-          hashIF: queryParams.hashIF as string,
-          callbackUrl: queryParams.callbackUrl as string,
-        });
+      
+      if (queryParams?.token) {
+        try {
+          // Decodifica o JWT recebido no link
+          const decodedToken: Omit<User, 'hashAA' | 'email'> = jwtDecode(queryParams.token as string);
+          console.log("Dados decodificados do token:", decodedToken);
+          
+          // Navega para a tela de confirmação com os dados do token
+          navigation.navigate('ConfirmData', {
+            userData: decodedToken
+          });
+        } catch (error) {
+          Alert.alert("Link Inválido", "O link de convite é inválido ou expirou.");
+        }
       }
     }
   }, [initialUrl]);
 
   const handleCreateAccount = () => {
-    // Simula um deep link genérico se o app for aberto normalmente
-    // o hashIf será usado para autorizar a criação da conta no backend
-    // o callbackUrl é onde a IF redirecionará com os dados do usuário
-    navigation.navigate('ConfirmData', {
-      callbackUrl: 'http://192.168.1.16:3333/if-callback', // mocked
-    });
+    // Simula um deep link com um JWT mockado
+    const mockJwt = createMockJwt(mockLinkData);
+    const mockUrl = `vctkapp://invite?token=${mockJwt}`;
+    console.log("Simulando clique em deep link:", mockUrl);
+    
+    // Simula o processo de decodificação e navegação
+    try {
+      const decodedToken: Omit<User, 'hashAA' | 'email'> = jwtDecode(mockJwt);
+      navigation.navigate('ConfirmData', {
+        userData: decodedToken
+      });
+    } catch (error) {
+      console.error("Erro ao simular deep link:", error);
+      Alert.alert("Erro", "Não foi possível processar a simulação do link.");
+    }
   };
   
   return (

@@ -2,7 +2,6 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
-// ATUALIZADO: Token agora tem a propriedade opcional 'isRequired'
 type Token = { 
   id: string; 
   name: string; 
@@ -10,7 +9,6 @@ type Token = {
   isRequired?: boolean;
 };
 
-// ATUALIZADO: AuthorizationRequest agora tem 'requestType' e 'description'
 export type AuthorizationRequest = { 
   id: string; 
   title: string; 

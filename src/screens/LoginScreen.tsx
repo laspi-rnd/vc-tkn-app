@@ -9,8 +9,8 @@ import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
 import { useUser } from '../contexts/UserContext';
 import { CommonActions } from '@react-navigation/native';
-import { useKeycloakAuth, discovery, KEYCLOAK_CLIENT_ID, redirectUri } from '../services/authService';
-import { save, getValueFor } from '../services/secureStorage';
+import { useKeycloakAuth, getMyAccount, authorizeIf, discovery, KEYCLOAK_CLIENT_ID, redirectUri } from '../services/authService';
+import { save, getValueFor, deleteValueFor } from '../services/secureStorage';
 import { exchangeCodeAsync, AuthSessionResult } from 'expo-auth-session';
 import { jwtDecode } from 'jwt-decode';
 
@@ -20,10 +20,7 @@ interface Props { navigation: LoginScreenNavigationProp; }
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-
   const { request, response, promptAsync } = useKeycloakAuth();
-  console.log("Objeto de requisição de autenticação:", request);
-  console.log("Resposta de autenticação recebida:", response);
 
   useEffect(() => {
     const processAuthResponse = async (res: AuthSessionResult) => {
@@ -31,52 +28,47 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         const { code } = res.params;
         setIsLoading(true);
         try {
-          if (!request?.codeVerifier) {
-            throw new Error("O verificador PKCE não foi encontrado na requisição inicial.");
+          if (!request?.codeVerifier) throw new Error("Verificador PKCE não encontrado.");
+          
+          const tokenResult = await exchangeCodeAsync({
+            clientId: KEYCLOAK_CLIENT_ID, code, redirectUri,
+            extraParams: { code_verifier: request.codeVerifier },
+          }, discovery);
+
+          await save('accessToken', tokenResult.accessToken);
+          await save('refreshToken', tokenResult.refreshToken);
+          const decodedToken: any = jwtDecode(tokenResult.accessToken);
+
+          // ETAPA DO PRIMEIRO LOGIN: Verifica se há uma autorização pendente
+          const pendingAuthHash = await getValueFor('pendingFirstLoginAuth');
+          if (pendingAuthHash) {
+            console.log("Autorização de primeiro login encontrada. Enviando para o backend...");
+            await authorizeIf(pendingAuthHash);
+            await deleteValueFor('pendingFirstLoginAuth'); // Apaga para não reenviar
+            console.log("Autorização enviada e chave removida com sucesso.");
           }
 
-          const tokenResult = await exchangeCodeAsync(
-            {
-              clientId: KEYCLOAK_CLIENT_ID,
-              code,
-              redirectUri,
-              extraParams: {
-                code_verifier: request.codeVerifier,
-              },
-            },
-            discovery
-          );
-          console.log("Resultado da troca de código por tokens:", tokenResult);
-          const { accessToken, refreshToken } = tokenResult;
-          await save('accessToken', accessToken);
-          await save('refreshToken', refreshToken);
-
-          const decodedToken: any = jwtDecode(accessToken);
-          console.log("Token de acesso decodificado:", decodedToken);
+          const hashIf = await getValueFor('hashIf');
+          if (!hashIf) throw new Error("Identificador da instituição não encontrado. Por favor, complete o cadastro.");
+          const accountData = await getMyAccount(hashIf);
 
           const finalUserData = {
             name: decodedToken.name || `${decodedToken.given_name || ''} ${decodedToken.family_name || ''}`.trim(),
             email: decodedToken.email || "",
-            cpf: decodedToken.documento || "",
-            dateOfBirth: decodedToken.dataNascimento || "",
+            cpf: decodedToken.preferred_username || "",
+            dateOfBirth: "1990-08-15",
+            hashAA: accountData.hashAA,
           };
-
-          console.log("Dados do usuário decodificados do token:", finalUserData);
           
           login(finalUserData);
           navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'App' }] }));
 
         } catch (error: any) {
-          console.error("LOG DETALHADO DO ERRO:", error);
           Alert.alert("Erro de Autenticação", error.message || "Não foi possível completar o login.");
-        } finally {
           setIsLoading(false);
         }
       } else if (res.type === 'error' || res.type === 'cancel') {
         setIsLoading(false);
-        if (res.type === 'error') {
-          console.error('Erro de autenticação:', res.error);
-        }
       }
     };
     
@@ -98,16 +90,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.subtitle}>
           Será redirecionado para um ambiente seguro para fazer o seu login.
         </Text>
-        
         <View style={styles.buttonContainer}>
           {isLoading ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : (
-            <CustomButton 
-              title="Fazer Login com Conta Única" 
-              onPress={handleLogin} 
-              disabled={!request}
-            />
+            <CustomButton title="Fazer Login com Conta Única" onPress={handleLogin} disabled={!request} />
           )}
         </View>
       </View>
