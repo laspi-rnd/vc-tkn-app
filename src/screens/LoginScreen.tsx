@@ -1,187 +1,120 @@
 // src/screens/LoginScreen.tsx
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, Alert, ActivityIndicator, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../../App';
 import CustomButton from '../components/CustomButton';
 import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
-import { useUser, User } from '../contexts/UserContext';
+import { useUser } from '../contexts/UserContext';
 import { CommonActions } from '@react-navigation/native';
-import { getCurrentScenario } from '../data/scenarioManager';
-import { loadMockData, getMockNotifications } from '../data/mockData';
+import { useKeycloakAuth, getMyAccount, discovery, KEYCLOAK_CLIENT_ID, redirectUri } from '../services/authService';
+import { save, getValueFor } from '../services/secureStorage';
+import { exchangeCodeAsync, AuthSessionResult } from 'expo-auth-session';
+import { jwtDecode } from 'jwt-decode';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 interface Props { navigation: LoginScreenNavigationProp; }
 
-// Fallback credentials if scenario not loaded
-const fallbackCredentials = {
-  cpf: "123.456.789-00",
-  password: "12345678",
-  userData: {
-    name: "Joaquim Ferreira",
-    hashAA: `0x${Math.random().toString(16).substring(2, 42)}`,
-    cpf: "123.456.789-00",
-    email: "leandro.assis@email.com",
-    dateOfBirth: "15/08/1990"
-  }
-};
-
-const MAX_ATTEMPTS = 3;
-const LOCKOUT_DURATION = 30;
-
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const { login, setInitialNotifications } = useUser();
-  const [cpf, setCpf] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberCpf, setRememberCpf] = useState(false);
+  const { login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [attempts, setAttempts] = useState(0);
-  const [lockedUntil, setLockedUntil] = useState<Date | null>(null);
-  const [countdown, setCountdown] = useState(0);
+
+  const { request, response, promptAsync } = useKeycloakAuth();
+  console.log("Objeto de requisição de autenticação:", request);
+  console.log("Resposta de autenticação recebida:", response);
 
   useEffect(() => {
-    const loadSavedCpf = async () => {
-      const savedCpf = await AsyncStorage.getItem('savedCpf');
-      if (savedCpf) {
-        setCpf(savedCpf);
-        setRememberCpf(true);
-      }
-    };
-    loadSavedCpf();
+    const processAuthResponse = async (res: AuthSessionResult) => {
+      if (res.type === 'success') {
+        const { code } = res.params;
+        setIsLoading(true);
+        try {
+          // A CORREÇÃO CRÍTICA ESTÁ AQUI:
+          // O 'codeVerifier' deve ser passado dentro de 'extraParams'
+          // com o nome 'code_verifier' (com underscore).
+          if (!request?.codeVerifier) {
+            throw new Error("O verificador PKCE não foi encontrado na requisição inicial.");
+          }
 
-    // Auto-fill with scenario data for demo mode
-    const loadScenarioData = async () => {
-      const scenario = await getCurrentScenario();
-      setCpf(scenario.user.cpf);
-      setPassword('12345678');
-      setRememberCpf(true);
-    };
-    loadScenarioData();
-  }, []);
+          const tokenResult = await exchangeCodeAsync(
+            {
+              clientId: KEYCLOAK_CLIENT_ID,
+              code,
+              redirectUri,
+              extraParams: {
+                code_verifier: request.codeVerifier,
+              },
+            },
+            discovery
+          );
 
-  useEffect(() => {
-    if (lockedUntil) {
-      const interval = setInterval(() => {
-        const secondsLeft = Math.ceil((lockedUntil.getTime() - new Date().getTime()) / 1000);
-        if (secondsLeft > 0) {
-          setCountdown(secondsLeft);
-        } else {
-          setLockedUntil(null);
-          setAttempts(0);
-          setCountdown(0);
-          clearInterval(interval);
+          const { accessToken, refreshToken } = tokenResult;
+          await save('accessToken', accessToken);
+          await save('refreshToken', refreshToken);
+
+          const decodedToken: any = jwtDecode(accessToken);
+          const hashIf = await getValueFor('hashIf');
+          if (!hashIf) throw new Error("Identificador da instituição não encontrado.");
+          
+          const accountData = await getMyAccount(hashIf);
+
+          const finalUserData = {
+            name: decodedToken.name || `${decodedToken.given_name || ''} ${decodedToken.family_name || ''}`.trim(),
+            email: decodedToken.email || "",
+            cpf: decodedToken.preferred_username || "",
+            dateOfBirth: "15/08/1990", // Mock
+            hashAA: accountData.hashAA,
+          };
+          
+          login(finalUserData);
+          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'App' }] }));
+
+        } catch (error: any) {
+          console.error("LOG DETALHADO DO ERRO:", error);
+          Alert.alert("Erro de Autenticação", error.message || "Não foi possível completar o login.");
+        } finally {
+          setIsLoading(false);
         }
-      }, 1000);
-      return () => clearInterval(interval);
+      } else if (res.type === 'error' || res.type === 'cancel') {
+        setIsLoading(false);
+        if (res.type === 'error') {
+          console.error('Erro de autenticação:', res.error);
+        }
+      }
+    };
+    
+    if (response) {
+      processAuthResponse(response);
     }
-  }, [lockedUntil]);
-  
-  const handleCpfChange = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
-    let formatted = cleaned;
-    if (cleaned.length > 3) formatted = cleaned.slice(0, 3) + '.' + cleaned.slice(3);
-    if (cleaned.length > 6) formatted = formatted.slice(0, 7) + '.' + formatted.slice(7);
-    if (cleaned.length > 9) formatted = formatted.slice(0, 11) + '-' + formatted.slice(11);
-    setCpf(formatted.slice(0, 14));
-  };
-  
+  }, [response, request]);
+
   const handleLogin = async () => {
-    if (lockedUntil) return;
     setIsLoading(true);
-    setError('');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Load scenario data
-    const scenario = await getCurrentScenario();
-    const scenarioCpf = scenario.user.cpf;
-    const defaultPassword = "12345678"; // All scenarios use this password for simplicity
-
-    // Use scenario data if available, otherwise fallback
-    const validCpf = scenarioCpf || fallbackCredentials.cpf;
-    const validPassword = defaultPassword;
-
-    if (cpf === validCpf && password === validPassword) {
-      if (rememberCpf) {
-        await AsyncStorage.setItem('savedCpf', cpf);
-      } else {
-        await AsyncStorage.removeItem('savedCpf');
-      }
-
-      // Load mock data from scenario
-      await loadMockData();
-      const notifications = getMockNotifications();
-
-      // Create user data from scenario
-      const userData: User = {
-        name: scenario.user.nome,
-        hashAA: scenario.user.aa_address,
-        cpf: scenario.user.cpf,
-        email: scenario.user.email,
-        dateOfBirth: scenario.user.dataNascimento,
-      };
-
-      login(userData);
-      setInitialNotifications(notifications);
-      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'App' }] }));
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      if (newAttempts >= MAX_ATTEMPTS) {
-        setError(`Muitas tentativas. Tente novamente em ${LOCKOUT_DURATION} segundos.`);
-        const newLockedUntil = new Date();
-        newLockedUntil.setSeconds(newLockedUntil.getSeconds() + LOCKOUT_DURATION);
-        setLockedUntil(newLockedUntil);
-      } else {
-        setError(`CPF ou senha inválidos. (${MAX_ATTEMPTS - newAttempts} tentativas restantes)`);
-      }
-    }
-    setIsLoading(false);
+    await promptAsync();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <AppLogo />
-        <Text style={styles.title}>Entrar na Conta</Text>
+        <Text style={styles.title}>Aceda à sua Conta</Text>
+        <Text style={styles.subtitle}>
+          Será redirecionado para um ambiente seguro para fazer o seu login.
+        </Text>
         
-        <TextInput
-          style={styles.input}
-          placeholder="CPF"
-          value={cpf}
-          onChangeText={handleCpfChange}
-          keyboardType="number-pad"
-          maxLength={14}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        
-        <View style={styles.rememberContainer}>
-          <Text>Lembrar CPF</Text>
-          <Switch value={rememberCpf} onValueChange={setRememberCpf} />
-        </View>
-
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        {countdown > 0 ? <Text style={styles.countdownText}>Tente novamente em: {countdown}s</Text> : null}
-
         <View style={styles.buttonContainer}>
           {isLoading ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : (
-            <CustomButton title="Entrar" onPress={handleLogin} disabled={!!lockedUntil} />
+            <CustomButton 
+              title="Fazer Login com Conta Única" 
+              onPress={handleLogin} 
+              disabled={!request}
+            />
           )}
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -189,37 +122,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  // A CORREÇÃO ESTÁ AQUI: Adicionado 'alignItems: center'
-  container: { 
-    flex: 1, 
-    padding: spacing.large, 
-    justifyContent: 'center',
-    alignItems: 'center', // Esta linha centraliza tudo horizontalmente
-  },
+  container: { flex: 1, padding: spacing.large, justifyContent: 'center', alignItems: 'center' },
   title: { ...typography.title, textAlign: 'center', marginVertical: spacing.large },
-  // Adicionado width: '100%' para os inputs e containers se esticarem corretamente
-  input: { 
-    width: '100%',
-    height: 50, 
-    borderColor: '#ccc', 
-    borderWidth: 1, 
-    borderRadius: 8, 
-    paddingHorizontal: 15, 
-    fontSize: 16, 
-    backgroundColor: colors.white, 
-    marginBottom: spacing.medium 
-  },
-  rememberContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    width: '100%', 
-    marginBottom: spacing.medium 
-  },
-  errorText: { color: 'red', textAlign: 'center', marginBottom: spacing.small },
-  countdownText: { color: colors.primary, textAlign: 'center', fontWeight: 'bold', marginBottom: spacing.small },
+  subtitle: { ...typography.body, textAlign: 'center', color: colors.welcomeText, marginBottom: spacing.xlarge, paddingHorizontal: spacing.medium },
   buttonContainer: { width: '100%', marginTop: spacing.medium },
-  backButtonText: { color: colors.primary, textAlign: 'center', marginTop: spacing.medium, fontSize: 16 },
 });
 
 export default LoginScreen;

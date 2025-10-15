@@ -1,4 +1,12 @@
 {
-  "compilerOptions": {},
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    // ADICIONADO: Esta linha diz ao TypeScript para procurar por tipos
+    // na nossa pasta 'types' e também no local padrão 'node_modules/@types'.
+    "typeRoots": [
+      "./src/types",
+      "./node_modules/@types"
+    ]
+  }
 }
