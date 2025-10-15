@@ -119,7 +119,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
         <TouchableOpacity style={styles.accountCard} onPress={() => setDetailsModalVisible(true)}>
           <View>
-            <Text style={styles.cardTitle}>A sua Conta</Text>
+            <Text style={styles.cardTitle}>Sua Conta</Text>
             <Text style={styles.cardHash}>{`${user.hashAA.substring(0, 6)}...${user.hashAA.substring(user.hashAA.length - 4)}`}</Text>
           </View>
           <AppIcon name="eye" color={colors.primary} size={24} />

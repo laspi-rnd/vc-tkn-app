@@ -35,7 +35,7 @@ export function useKeycloakAuth() {
 export const getVerificationRequests = async (): Promise<AuthorizationRequest[]> => {
   try {
     console.log("Buscando solicitações de verificação...");
-    const response = await api.post('/client/verify-if-request'); // Alterado para POST sem body
+    const response = await api.post('/client/verify-if-request', {}); // Alterado para POST sem body
     return response.data || [];
   } catch (error) {
     console.error("Erro ao buscar solicitações:", error);
