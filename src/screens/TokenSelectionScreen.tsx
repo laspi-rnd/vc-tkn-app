@@ -1,32 +1,21 @@
 // src/screens/TokenSelectionScreen.tsx
 
 import React, { useState } from 'react';
-// 1. IMPORTADO: Alert para a caixa de diálogo de confirmação
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomButton from '../components/CustomButton';
 import { colors, spacing, typography } from '../theme/theme';
 import { Svg, Path } from 'react-native-svg';
-import { useUser, AuthorizationRequest } from '../contexts/UserContext';
+import { useUser, AuthorizationRequest, UserToken, TokenType } from '../contexts/UserContext';
 import { HomeStackParamList } from '../../App';
-import AppIcon from '../components/AppIcon'; // Usaremos para o ícone da lixeira
-
-type Token = AuthorizationRequest['requestedTokens'][0];
+import AppIcon from '../components/AppIcon';
+import { save, getValueFor } from '../services/secureStorage';
+import { submitAuthorization } from '../services/authService';
 
 type TokenSelectionScreenRouteProp = RouteProp<HomeStackParamList, 'TokenSelection'>;
 type TokenSelectionScreenNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'TokenSelection'>;
-
-interface Props {
-  route: TokenSelectionScreenRouteProp;
-  navigation: TokenSelectionScreenNavigationProp;
-}
-
-const mockAuthorizeIf = async (ifHash: string, authorizedTokens: string[]): Promise<{ success: boolean }> => {
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  const shouldSucceed = Math.random() > 0.1;
-  return { success: shouldSucceed };
-};
+interface Props { route: TokenSelectionScreenRouteProp; navigation: TokenSelectionScreenNavigationProp; }
 
 const CheckboxIcon = ({ checked }: { checked: boolean }) => (
   <View style={[styles.checkboxBase, checked && styles.checkboxChecked]}>
@@ -38,12 +27,12 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
   const { request } = route.params;
   const { removeNotification } = useUser();
   
-  const [selectedTokenIds, setSelectedTokenIds] = useState<string[]>(() => 
-    request.requestedTokens.filter(t => t.isRequired).map(t => t.id)
+  const [selectedTokenIds, setSelectedTokenIds] = useState<number[]>(() => 
+    request.tokenDetails?.filter(t => t.obrigatorio).map(t => t.id) || []
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  const toggleTokenSelection = (tokenId: string) => {
+  const toggleTokenSelection = (tokenId: number) => {
     setSelectedTokenIds(prev =>
       prev.includes(tokenId)
         ? prev.filter(id => id !== tokenId)
@@ -53,29 +42,61 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const handleAuthorize = async () => {
     setIsLoading(true);
-    const selectedTokens = request.requestedTokens.filter(token => selectedTokenIds.includes(token.id));
-    const selectedTokenNames = selectedTokens.map(token => token.name);
-    
-    const result = await mockAuthorizeIf(request.institutionHash, selectedTokenNames);
-    setIsLoading(false);
+    try {
+      const payload = {
+          solicitacao_id: request.solicitacao_id,
+          autorizados: selectedTokenIds,
+      };
+      await submitAuthorization(payload);
 
-    if (result.success) {
-      removeNotification(request.id);
-      navigation.replace('AuthorizationConfirmed', { authorizedTokens: selectedTokenNames });
-    } else {
+      if (request.requestType === 'issuance') {
+        const currentlyStoredTokens: UserToken[] = JSON.parse(await getValueFor('userWalletTokens') || '[]');
+        
+        const now = new Date();
+        const expiryDate = new Date();
+        expiryDate.setFullYear(now.getFullYear() + 2);
+
+        const newTokensToStore: UserToken[] = request.tokenDetails
+          ?.filter(td => selectedTokenIds.includes(td.id))
+          .map(td => ({
+            id: td.id,
+            type: td.tipo,
+            status: 'Válido',
+            issuer: request.mensagem,
+            issueDate: now.toISOString().split('T')[0],
+            expiryDate: expiryDate.toISOString().split('T')[0],
+          })) || [];
+
+        const updatedTokens = [...currentlyStoredTokens];
+        newTokensToStore.forEach(newToken => {
+            if (!updatedTokens.some(existingToken => existingToken.id === newToken.id)) {
+                updatedTokens.push(newToken);
+            }
+        });
+        
+        await save('userWalletTokens', JSON.stringify(updatedTokens));
+        console.log('Novos tokens guardados na carteira!');
+      }
+
+      removeNotification(request.solicitacao_id);
+      const authorizedTokenNames = request.tokenDetails?.filter(td => selectedTokenIds.includes(td.id)).map(td => td.tipo) || [];
+      navigation.replace('AuthorizationConfirmed', { authorizedTokens: authorizedTokenNames });
+
+    } catch (error: any) {
       navigation.navigate('AuthorizationError');
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  // 2. ADICIONADO: Função para lidar com a exclusão da solicitação
+  
   const handleDeleteRequest = () => {
     Alert.alert(
       "Excluir Solicitação",
-      `Você tem certeza que deseja excluir esta solicitação de "${request.institutionName}"? Esta ação não pode ser desfeita.`,
+      `Tem a certeza de que deseja excluir esta solicitação de "${request.mensagem}"?`,
       [
         { text: "Cancelar", style: "cancel" },
         { text: "Excluir", style: "destructive", onPress: () => {
-            removeNotification(request.id);
+            removeNotification(request.solicitacao_id);
             navigation.goBack();
           } 
         }
@@ -83,38 +104,32 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   };
 
-  const renderTokenItem = ({ item }: { item: Token }) => {
+  const renderTokenItem = ({ item }: { item: TokenType }) => {
     const isSelected = selectedTokenIds.includes(item.id);
     return (
       <TouchableOpacity 
         style={styles.tokenItem} 
-        onPress={() => !item.isRequired && toggleTokenSelection(item.id)}
-        activeOpacity={item.isRequired ? 1 : 0.7}
+        onPress={() => !item.obrigatorio && toggleTokenSelection(item.id)}
+        activeOpacity={item.obrigatorio ? 1 : 0.7}
       >
         <CheckboxIcon checked={isSelected} />
         <View style={styles.tokenTextContainer}>
           <View style={styles.tokenNameContainer}>
-            <Text style={styles.tokenName}>{item.name}</Text>
-            {item.isRequired ? (
-              <View style={styles.requiredBadge}>
-                <Text style={styles.badgeText}>Obrigatório</Text>
-              </View>
+            <Text style={styles.tokenName}>{item.tipo}</Text>
+            {item.obrigatorio ? (
+              <View style={styles.requiredBadge}><Text style={styles.badgeText}>Obrigatório</Text></View>
             ) : (
-              <View style={[styles.requiredBadge, styles.optionalBadge]}>
-                <Text style={styles.badgeText}>Opcional</Text>
-              </View>
+              <View style={[styles.requiredBadge, styles.optionalBadge]}><Text style={styles.badgeText}>Opcional</Text></View>
             )}
           </View>
-          <Text style={styles.tokenDescription}>{item.description}</Text>
+          <Text style={styles.tokenDescription}>{item.descricao}</Text>
         </View>
       </TouchableOpacity>
     );
   };
-
-  const title = request.requestType === 'query' ? 'Autorizar Consulta' : 'Autorizar Criação';
-  const subtitle = request.requestType === 'query'
-    ? `A "${request.institutionName}" solicitou a consulta dos seguintes tokens. Selecione quais você deseja autorizar.`
-    : `A "${request.institutionName}" solicitou a criação dos seguintes tokens. Selecione quais você deseja emitir.`;
+  
+  const title = request.requestType === 'query' ? 'Autorizar Consulta' : 'Autorizar Emissão';
+  const subtitle = `De: ${request.mensagem}`;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -123,15 +138,14 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
         </View>
-        {/* 3. ADICIONADO: Ícone de lixeira clicável */}
         <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteRequest}>
           <AppIcon name="trash-2" size={24} color="#D32F2F" />
         </TouchableOpacity>
       </View>
       <FlatList
-        data={request.requestedTokens}
+        data={request.tokenDetails}
         renderItem={renderTokenItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContainer}
       />
       <View style={styles.footer}>
@@ -157,19 +171,8 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.white },
-  // 4. ATUALIZADO: Header agora usa flexbox para alinhar o título e o botão
-  header: { 
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: spacing.large, 
-    borderBottomWidth: 1, 
-    borderBottomColor: colors.background 
-  },
-  deleteButton: {
-    marginLeft: spacing.medium,
-    padding: spacing.small,
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: spacing.large, borderBottomWidth: 1, borderBottomColor: colors.background },
+  deleteButton: { marginLeft: spacing.medium, padding: spacing.small },
   title: { ...typography.title, color: colors.text },
   subtitle: { ...typography.body, color: colors.welcomeText, marginTop: spacing.small },
   listContainer: { padding: spacing.large },
@@ -179,20 +182,9 @@ const styles = StyleSheet.create({
   tokenTextContainer: { flex: 1 },
   tokenNameContainer: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   tokenName: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginRight: spacing.small },
-  requiredBadge: { 
-    backgroundColor: colors.primary, 
-    borderRadius: 4, 
-    paddingHorizontal: 6, 
-    paddingVertical: 2 
-  },
-  optionalBadge: {
-    backgroundColor: colors.welcomeText,
-  },
-  badgeText: { 
-    color: colors.white, 
-    fontSize: 10, 
-    fontWeight: 'bold' 
-  },
+  requiredBadge: { backgroundColor: colors.primary, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  optionalBadge: { backgroundColor: colors.welcomeText, },
+  badgeText: { color: colors.white, fontSize: 10, fontWeight: 'bold' },
   tokenDescription: { fontSize: 14, color: colors.welcomeText, marginTop: 4 },
   footer: { padding: spacing.large, borderTopWidth: 1, borderTopColor: colors.background },
   buttonRow: { flexDirection: 'row', alignItems: 'center' },

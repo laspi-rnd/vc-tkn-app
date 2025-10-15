@@ -1,93 +1,101 @@
 // src/screens/HomeScreen.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Image, Alert } from 'react-native';
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, spacing, typography } from '../theme/theme';
-import { useUser, AuthorizationRequest } from '../contexts/UserContext';
-import { mockNotifications } from '../data/mockData';
+import { useUser, AuthorizationRequest, TokenType } from '../contexts/UserContext';
 import UserDetailsModal from '../components/UserDetailsModal';
 import ScannerModal from '../components/ScannerModal';
 import { HomeStackParamList } from '../../App';
 import AppIcon from '../components/AppIcon';
 import NotificationIcon from '../components/NotificationIcon';
-
-import { save, getValueFor } from '../services/secureStorage';
-import { getMyAccount, authorizeIF, verifyAuthorizationRequest } from '../services/rpc';
+import { getTokenTypes, getVerificationRequests } from '../services/authService';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
 interface Props { navigation: HomeScreenNavigationProp; }
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
-  const { user, notifications, setInitialNotifications, logout } = useUser();
-  const rootNavigation = useNavigation(); // Hook para acessar a navegação raiz
+  const { user, notifications, setNotifications, logout } = useUser();
+  const rootNavigation = useNavigation();
   const [isDetailsModalVisible, setDetailsModalVisible] = useState(false);
   const [isScannerVisible, setScannerVisible] = useState(false);
-  
-  useEffect(async () => {
-    const checkFirstLogin = async () => {
-      const hashAA_If = await getValueFor('hashAAIF');
-      if (hashAA_If) {
-        // Se existir, significa que é o primeiro login após a criação da conta
-        // então submete a autorização para a IF
-        const result = await authorizeIF(hashAA_If);
-        if (result.success) {
-          Alert.alert("Conta Ativada", "Sua conta foi ativada com sucesso!");
-        } else {
-          Alert.alert("Erro", "Houve um problema ao ativar sua conta. Tente novamente mais tarde.");
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+
+  // useFocusEffect é um hook que roda toda vez que a tela entra em foco
+  useFocusEffect(
+    useCallback(() => {
+      const fetchNotifications = async () => {
+        if (!user) return; // Só busca se o utilizador estiver logado
+        
+        setIsLoadingNotifications(true);
+        try {
+          // Busca os tipos de token e as solicitações em paralelo
+          const [tokenTypes, requests] = await Promise.all([
+            getTokenTypes(),
+            getVerificationRequests()
+          ]);
+          
+          const tokenTypesMap = new Map<number, TokenType>();
+          tokenTypes.forEach(type => tokenTypesMap.set(type.id, type));
+
+          // Enriquece cada solicitação com os detalhes dos tokens
+          const enrichedRequests = requests.map(req => {
+            const tokenDetails = req.solicitados.map(tokenId => tokenTypesMap.get(tokenId)).filter(Boolean) as TokenType[];
+            
+            // Lógica para inferir o tipo de requisição (pode precisar de ajuste)
+            // Exemplo: se algum token tiver 'Consulta' no nome, é 'query'
+            const isQuery = tokenDetails.some(td => td.tipo.toLowerCase().includes('consulta'));
+
+            return {
+              ...req,
+              tokenDetails,
+              requestType: isQuery ? 'query' : 'issuance',
+            } as AuthorizationRequest;
+          });
+
+          setNotifications(enrichedRequests);
+        } catch (error: any) {
+          Alert.alert("Erro", error.message || "Não foi possível carregar a sua caixa de entrada.");
+        } finally {
+          setIsLoadingNotifications(false);
         }
-        // Remove o hashAA_If após a verificação para não repetir esse processo
-         await save('hashAAIF', '');
-      }
-    };
+      };
 
-    checkFirstLogin();
-
-      setInitialNotifications(await verifyAuthorizationRequest());
-  }, []);
+      fetchNotifications();
+    }, [user]) // Roda novamente se o objeto 'user' mudar
+  );
 
   const handleLogout = () => {
-    Alert.alert(
-      "Sair da Conta",
-      "Você tem certeza que deseja sair?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sair", 
-          onPress: () => {
-            logout();
-            // Reseta toda a pilha de navegação para a tela de Onboarding
-            rootNavigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'Onboarding' }],
-              })
-            );
-          }, 
-          style: 'destructive' 
-        }
-      ]
-    );
+    Alert.alert("Sair da Conta", "Tem a certeza de que deseja sair?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Sair", onPress: () => {
+          logout();
+          rootNavigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Onboarding' }],
+            })
+          );
+        }, style: 'destructive' }
+    ]);
   };
 
   if (!user) { 
     return ( 
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-        </View>
+        <View style={styles.loadingContainer}><ActivityIndicator size="large" /></View>
       </SafeAreaView> 
     ); 
   }
   
   const NotificationItem = ({ item }: { item: AuthorizationRequest }) => ( 
     <TouchableOpacity style={styles.notificationItem} onPress={() => navigation.navigate('TokenSelection', { request: item })}>
-      <NotificationIcon type={item.requestType} />
+      <NotificationIcon type={item.requestType || 'query'} /> 
       <View style={styles.notificationTextContainer}>
-        <Text style={styles.notificationTitle}>{item.title}</Text>
-        <Text style={styles.notificationDescInstitution}>De: {item.institutionName}</Text>
-        <Text style={styles.notificationDesc}>{item.description}</Text>
+        <Text style={styles.notificationTitle}>{item.mensagem}</Text>
+        <Text style={styles.notificationDesc}>{item.tokenDetails?.length || 0} token(s) solicitado(s)</Text>
       </View>
       <AppIcon name="chevron-right" size={24} color={colors.welcomeText} />
     </TouchableOpacity> 
@@ -111,7 +119,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
         <TouchableOpacity style={styles.accountCard} onPress={() => setDetailsModalVisible(true)}>
           <View>
-            <Text style={styles.cardTitle}>Sua Conta</Text>
+            <Text style={styles.cardTitle}>A sua Conta</Text>
             <Text style={styles.cardHash}>{`${user.hashAA.substring(0, 6)}...${user.hashAA.substring(user.hashAA.length - 4)}`}</Text>
           </View>
           <AppIcon name="eye" color={colors.primary} size={24} />
@@ -119,8 +127,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         
         <View style={styles.inboxSection}>
           <Text style={styles.inboxTitle}>Caixa de Entrada</Text>
-          {notifications.length > 0 ? ( 
-            <FlatList data={notifications} renderItem={NotificationItem} keyExtractor={item => item.id} scrollEnabled={false} /> 
+          {isLoadingNotifications ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.large }}/>
+          ) : notifications.length > 0 ? ( 
+            <FlatList data={notifications} renderItem={NotificationItem} keyExtractor={item => item.solicitacao_id.toString()} scrollEnabled={false} /> 
           ) : ( 
             <Text style={styles.emptyInboxText}>Nenhuma solicitação pendente.</Text> 
           )}
@@ -130,7 +140,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       <TouchableOpacity style={styles.fab} onPress={() => setScannerVisible(true)}>
         <AppIcon name="camera" size={28} color={colors.white} />
       </TouchableOpacity>
-
       <UserDetailsModal visible={isDetailsModalVisible} onClose={() => setDetailsModalVisible(false)} user={user} />
       <ScannerModal visible={isScannerVisible} onClose={() => setScannerVisible(false)} />
     </SafeAreaView>
@@ -156,8 +165,7 @@ const styles = StyleSheet.create({
   notificationItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, borderRadius: 12, padding: spacing.medium, marginBottom: spacing.medium, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
   notificationTextContainer: { flex: 1, marginRight: spacing.small },
   notificationTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text },
-  notificationDescInstitution: { fontSize: 14, color: colors.primary, fontWeight: '500', marginTop: 4 },
-  notificationDesc: { fontSize: 14, color: colors.welcomeText, marginTop: 4, fontStyle: 'italic' },
+  notificationDesc: { fontSize: 14, color: colors.welcomeText, marginTop: 4 },
   fab: { position: 'absolute', bottom: spacing.large, right: spacing.large, width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4 },
 });
 

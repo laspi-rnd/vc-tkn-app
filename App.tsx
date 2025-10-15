@@ -25,6 +25,7 @@ import TokenDetailScreen from './src/screens/TokenDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import ConfirmDataScreen from './src/screens/ConfirmDataScreen';
 import CreatePasswordScreen from './src/screens/CreatePasswordScreen';
+import FirstLoginScannerScreen from './src/screens/FirstLoginScannerScreen'; // NOVO
 
 // --- NAVEGADORES ANINHADOS ---
 export type HomeStackParamList = { Home: undefined; Profile: undefined; TokenSelection: { request: AuthorizationRequest; }; AuthorizationConfirmed: { authorizedTokens: string[]; }; AuthorizationError: undefined; };
@@ -71,15 +72,13 @@ const AppTabNavigator = () => (
 );
 
 // --- NAVEGADOR RAIZ (ATUALIZADO) ---
-type UserDataFromLink = Omit<User, 'hashAA' | 'email'>;
-type UserDataForRegistration = Omit<User, 'hashAA'>;
-
 export type RootStackParamList = { 
   Onboarding: undefined; 
   Login: undefined; 
   OnboardingError: undefined; 
-  ConfirmData: { userData: UserDataFromLink };
-  CreatePassword: { userData: UserDataForRegistration }; 
+  ConfirmData: { userData: Omit<User, 'hashAA' | 'email'> };
+  CreatePassword: { userData: Omit<User, 'hashAA'> }; 
+  FirstLoginScanner: undefined; // NOVO
   App: undefined; 
 };
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -96,6 +95,7 @@ export default function App() {
             <RootStack.Screen name="OnboardingError" component={OnboardingErrorScreen} />
             <RootStack.Screen name="ConfirmData" component={ConfirmDataScreen} />
             <RootStack.Screen name="CreatePassword" component={CreatePasswordScreen} />
+            <RootStack.Screen name="FirstLoginScanner" component={FirstLoginScannerScreen} />
             <RootStack.Screen name="App" component={AppTabNavigator} />
           </RootStack.Navigator>
         </NavigationContainer>

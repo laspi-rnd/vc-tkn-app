@@ -3,7 +3,7 @@
 import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import axios from 'axios';
-import { User } from '../contexts/UserContext';
+import { User, AuthorizationRequest, TokenType } from '../contexts/UserContext';
 import api from './api';
 
 // --- Variáveis de Autenticação ---
@@ -15,7 +15,7 @@ export const redirectUri = makeRedirectUri({ scheme: 'vctkapp' });
 
 console.log('>>>>>> URI DE REDIRECIONAMENTO SENDO USADA:', redirectUri);
 
-// Hook de autenticação do Keycloak (sem alterações)
+// Hook de autenticação do Keycloak
 export function useKeycloakAuth() {
   const [request, response, promptAsync] = useAuthRequest({
     clientId: KEYCLOAK_CLIENT_ID,
@@ -29,78 +29,75 @@ export function useKeycloakAuth() {
 // --- Funções de API ---
 
 /**
- * Simula o envio dos dados do novo usuário para a IF, que seria responsável por criar o usuário no Keycloak.
+ * Busca as solicitações de verificação pendentes para um utilizador autenticado.
+ * Esta chamada é autenticada com o token do Keycloak.
  */
+export const getVerificationRequests = async (): Promise<AuthorizationRequest[]> => {
+  try {
+    console.log("Buscando solicitações de verificação...");
+    const response = await api.post('/client/verify-if-request'); // Alterado para POST sem body
+    return response.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar solicitações:", error);
+    throw new Error("Não foi possível carregar as solicitações.");
+  }
+};
+
+/**
+ * Busca todos os tipos de token disponíveis.
+ */
+export const getTokenTypes = async (): Promise<TokenType[]> => {
+  try {
+    console.log("Buscando tipos de token...");
+    const response = await api.get('/common/get-token-types');
+    return response.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar tipos de token:", error);
+    throw new Error("Não foi possível carregar os tipos de token.");
+  }
+};
+
+/**
+ * Submete a autorização para uma solicitação específica.
+ */
+export const submitAuthorization = async (payload: any): Promise<{ success: boolean }> => {
+    console.log("Enviando autorização para o backend:", payload);
+    // Em um app real, esta seria a chamada para a API
+    // await api.post('/clients/authorize-request', payload);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    return { success: true };
+};
+
+// --- Funções Mantidas (fluxo de cadastro e login) ---
+
 export const registerUserWithIF = async (userData: Omit<User, 'hashAA'>, password: string): Promise<{ success: boolean }> => {
-  console.log(`Simulando envio de dados de registro para a IF...`);
-  const payload = {
-    cpf: userData.cpf,
-    name: userData.name,
-    email: userData.email,
-    dateOfBirth: userData.dateOfBirth,
-    password,
-  };
-  console.log("Payload enviado para a IF (simulado):", payload);
   await new Promise(resolve => setTimeout(resolve, 2000));
-  console.log("IF confirmou o recebimento dos dados de registro (simulado).");
   return { success: true };
 };
 
 /**
- * Busca o hashAA da IF no nosso backend.
- * @param cpf O CPF do usuário.
- * @param dateOfBirth A data de nascimento do usuário.
+ * Esta função agora serve apenas para o fluxo de cadastro, sem token.
+ * Busca o hashAA da IF que quer criar a VC.
  */
-export const verifyIfRequest = async (cpf: string, dateOfBirth: string): Promise<{ hashAA_If: string }> => {
+export const verifyIfRequestForRegistration = async (cpf: string, dateOfBirth: string): Promise<{ hashAA_If: string }> => {
   try {
-    console.log("Enviando requisição para /client/verify-if-request...");
-    const response = await api.post('/client/verify-if-request', {
-      cpfCnpjDoc: cpf.replace(/\D/g, ''), // Envia o CPF sem formatação
+    const response = await axios.post('http://192.168.1.16:3333/client/verify-if-request', {
+      cpfCnpjDoc: cpf.replace(/\D/g, ''),
       dataNascimentoFundacao: dateOfBirth,
     });
-    console.log("Resposta de verify-if-request:", response.data);
     return response.data[0];
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.error || "Não foi possível verificar a solicitação da IF.");
-    }
+    if (axios.isAxiosError(error) && error.response) throw new Error(error.response.data.error);
     throw new Error("Erro de comunicação ao verificar a solicitação da IF.");
   }
 };
 
-/**
- * Autoriza a criação da VC para a IF no nosso backend.
- * @param hashAA_If O hash da IF que será autorizado.
- */
-export const authorizeIf = async (hashAA_If: string): Promise<{ success: boolean }> => {
-  try {
-    console.log("Enviando requisição para /client/authorize-if...");
-    const payload = {
-      hashAA_If: hashAA_If,
-      autorizados: [],
-      autorizadosEmissao: [],
-	    autorizadoCriacaoVc: true
-    };
-    const response = await api.post('/client/authorize-if', payload);
-    console.log("Resposta de authorize-if:", response.data);
-    return { success: true };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.error || "Não foi possível autorizar a IF.");
-    }
-    throw new Error("Erro de comunicação ao autorizar a IF.");
-  }
-};
-
-// Função para obter a conta do usuário (sem alterações)
 export const getMyAccount = async (hashIf: string): Promise<{ network_name: string; hashAA: string }> => {
   try {
     const response = await api.post('/client/get-my-account', { hashIf });
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.error || "Não foi possível buscar a sua conta.");
-    }
+    if (axios.isAxiosError(error) && error.response) throw new Error(error.response.data.error);
     throw new Error("Erro de comunicação ao buscar a sua conta.");
   }
 };

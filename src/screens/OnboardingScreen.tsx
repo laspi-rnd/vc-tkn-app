@@ -26,9 +26,9 @@ const createMockJwt = (data: any) => {
 
 // Dados para a simulação do deep link
 const mockLinkData = {
-  name: "Joaquim Ferreira",
-  cpf: "12345678900", // CPF sem formatação
-  dateOfBirth: "1990-08-15"
+  name: "Maria Oliveira",
+  cpf: "98765432100", // CPF sem formatação
+  dateOfBirth: "1990-07-22"
 };
 
 const OnboardingScreen: React.FC<Props> = ({ navigation }) => {

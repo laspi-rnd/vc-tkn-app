@@ -8,7 +8,7 @@ import { RootStackParamList } from '../../App';
 import CustomButton from '../components/CustomButton';
 import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
-import { registerUserWithIF, verifyIfRequest } from '../services/authService';
+import { registerUserWithIF, verifyIfRequestForRegistration } from '../services/authService';
 import { save } from '../services/secureStorage';
 
 type CreatePasswordScreenRouteProp = RouteProp<RootStackParamList, 'CreatePassword'>;
@@ -35,7 +35,7 @@ const CreatePasswordScreen: React.FC<Props> = ({ route, navigation }) => {
       if (!registration.success) throw new Error("Não foi possível processar seu cadastro com a instituição.");
 
       // ETAPA 2: Chama o backend para obter o hashAA da IF
-      const { hashAA_If } = await verifyIfRequest(userData.cpf, userData.dateOfBirth);
+      const { hashAA_If } = await verifyIfRequestForRegistration(userData.cpf, userData.dateOfBirth);
       console.log("hashAA_If recebido:", hashAA_If);
       if (!hashAA_If) throw new Error("Não foi possível obter o identificador da instituição.");
 
