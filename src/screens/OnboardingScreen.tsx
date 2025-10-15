@@ -34,8 +34,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     // o hashIf será usado para autorizar a criação da conta no backend
     // o callbackUrl é onde a IF redirecionará com os dados do usuário
     navigation.navigate('ConfirmData', {
-      hashIF: '0x68aa95c5580f80b2137808c5afc1c2a068a024132ce7eef01e14fc5af931b5f8',
-      callbackUrl: 'http://192.168.1.16:3333/if-callback',
+      callbackUrl: 'http://192.168.1.16:3333/if-callback', // mocked
     });
   };
   

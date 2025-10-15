@@ -9,13 +9,14 @@ import CustomButton from '../components/CustomButton';
 import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
 import { registerUserWithIF } from '../services/authService';
+import { save } from '../services/secureStorage';
 
 type CreatePasswordScreenRouteProp = RouteProp<RootStackParamList, 'CreatePassword'>;
 type CreatePasswordScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CreatePassword'>;
 interface Props { route: CreatePasswordScreenRouteProp; navigation: CreatePasswordScreenNavigationProp; }
 
 const CreatePasswordScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { userData } = route.params;
+  const { userData, callbackUrl } = route.params;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,10 +39,13 @@ const CreatePasswordScreen: React.FC<Props> = ({ route, navigation }) => {
     setIsLoading(true);
     try {
       // ETAPA 1: Simula o envio dos dados do novo usuário para a IF (que criará a conta no Keycloak).
-      const registration = await registerUserWithIF(userData, password);
+      const registration = await registerUserWithIF(userData, password, callbackUrl);
       
       if (registration.success) {
         // ETAPA 2: Mostra mensagem de sucesso e redireciona para a tela de Login.
+
+        await save('hashAAIF', registration.hashAA_If || '');
+
         Alert.alert(
           "Conta Criada com Sucesso!",
           "Sua conta foi criada. Agora, por favor, faça o login para acessar o aplicativo.",

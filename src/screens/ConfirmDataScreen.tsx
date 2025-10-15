@@ -28,7 +28,7 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
 );
 
 const ConfirmDataScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { callbackUrl, hashIF } = route.params;
+  const { callbackUrl } = route.params;
   const [userData, setUserData] = useState<{ name: string; email: string; dateOfBirth: string; } | null>(null);
   const [cpf, setCpf] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +37,10 @@ const ConfirmDataScreen: React.FC<Props> = ({ route, navigation }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await fetchUserDataFromIF(callbackUrl);
+        // ETAPA 1: Busca os dados do usuário na IF usando o callbackUrl
+        // A IF deve retornar os dados do usuário (nome, email, data de nascimento)
+        // Simulamos a chamada com um mock
+        const data = await fetchUserDataFromIF(callbackUrl); // root
         setUserData(data);
       } catch (error: any) {
         Alert.alert("Erro", "Não foi possível buscar seus dados na instituição. Tente novamente mais tarde.", [{ text: "OK", onPress: () => navigation.goBack() }]);
@@ -72,11 +75,11 @@ const ConfirmDataScreen: React.FC<Props> = ({ route, navigation }) => {
       const hash = await generateSHA256(stringToHash);
 
       // Confirmamos o hash com a IF
-      const validation = await validateHashWithIF(callbackUrl, hash);
+      const validation = await validateHashWithIF(callbackUrl, hash); // callbackUrl/validate
 
       if (validation.success) {
         navigation.navigate('CreatePassword', {
-          userData: { ...userData, cpf: cpf, hashIF: hashIF, hashAA: hash }
+          userData: { callbackUrl }
         });
       } else {
         throw new Error("A validação com a instituição falhou.");

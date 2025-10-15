@@ -40,23 +40,11 @@ export function useKeycloakAuth() {
 
 // --- Funções de API e Mocks ---
 
-export const registerUserWithIF = async (userData: Omit<User, 'hashAA'>, password: string): Promise<{ success: boolean }> => {
+export const registerUserWithIF = async (userData: Omit<User, 'hashAA'>, password: string, callbackUrl: string): Promise<{ success: boolean, hashAA_If: string }> => {
   console.log(`Simulando envio de dados de registo para a IF...`);
   await new Promise(resolve => setTimeout(resolve, 2000));
   console.log("IF confirmou o recebimento dos dados de registo (simulado).");
-  return { success: true };
-};
-
-export const getMyAccount = async (hashIf: string): Promise<{ network_name: string; hashAA: string }> => {
-  try {
-    const response = await api.post('/client/get-my-account', { hashIf });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.error || "Não foi possível buscar a sua conta.");
-    }
-    throw new Error("Erro de comunicação ao buscar a sua conta.");
-  }
+  return { success: true, hashAA_If: '0xabc123def456ghi789jkl012mno345pq' };
 };
 
 export const fetchUserDataFromIF = async (callbackUrl: string) => {

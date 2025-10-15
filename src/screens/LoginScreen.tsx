@@ -9,7 +9,7 @@ import AppLogo from '../components/AppLogo';
 import { colors, spacing, typography } from '../theme/theme';
 import { useUser } from '../contexts/UserContext';
 import { CommonActions } from '@react-navigation/native';
-import { useKeycloakAuth, getMyAccount, discovery, KEYCLOAK_CLIENT_ID, redirectUri } from '../services/authService';
+import { useKeycloakAuth, discovery, KEYCLOAK_CLIENT_ID, redirectUri } from '../services/authService';
 import { save, getValueFor } from '../services/secureStorage';
 import { exchangeCodeAsync, AuthSessionResult } from 'expo-auth-session';
 import { jwtDecode } from 'jwt-decode';
@@ -31,9 +31,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         const { code } = res.params;
         setIsLoading(true);
         try {
-          // A CORREÇÃO CRÍTICA ESTÁ AQUI:
-          // O 'codeVerifier' deve ser passado dentro de 'extraParams'
-          // com o nome 'code_verifier' (com underscore).
           if (!request?.codeVerifier) {
             throw new Error("O verificador PKCE não foi encontrado na requisição inicial.");
           }
@@ -49,24 +46,22 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             },
             discovery
           );
-
+          console.log("Resultado da troca de código por tokens:", tokenResult);
           const { accessToken, refreshToken } = tokenResult;
           await save('accessToken', accessToken);
           await save('refreshToken', refreshToken);
 
           const decodedToken: any = jwtDecode(accessToken);
-          const hashIf = await getValueFor('hashIf');
-          if (!hashIf) throw new Error("Identificador da instituição não encontrado.");
-          
-          const accountData = await getMyAccount(hashIf);
+          console.log("Token de acesso decodificado:", decodedToken);
 
           const finalUserData = {
             name: decodedToken.name || `${decodedToken.given_name || ''} ${decodedToken.family_name || ''}`.trim(),
             email: decodedToken.email || "",
-            cpf: decodedToken.preferred_username || "",
-            dateOfBirth: "15/08/1990", // Mock
-            hashAA: accountData.hashAA,
+            cpf: decodedToken.documento || "",
+            dateOfBirth: decodedToken.dataNascimento || "",
           };
+
+          console.log("Dados do usuário decodificados do token:", finalUserData);
           
           login(finalUserData);
           navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'App' }] }));
