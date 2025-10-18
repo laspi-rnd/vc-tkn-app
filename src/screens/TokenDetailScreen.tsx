@@ -51,8 +51,7 @@ const TokenDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
         <Text style={styles.sectionTitle}>Informações Técnicas</Text>
         <View style={styles.card}>
-          <DetailRow label="ID do Token" value={token.technicalDetails.tokenId} />
-          <DetailRow label="Hash" value={token.technicalDetails.hash} />
+          <DetailRow label="ID do Token" value={token.id} />
         </View>
       </ScrollView>
     </SafeAreaView>

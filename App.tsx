@@ -2,7 +2,7 @@
 
 import 'react-native-gesture-handler';
 import React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -53,6 +53,7 @@ const WalletStackNavigator = () => (
 export type AppTabParamList = { 'Caixa de Entrada': undefined; 'Minha Carteira': undefined; };
 const Tab = createBottomTabNavigator<AppTabParamList>();
 const AppTabNavigator = () => (
+  <SafeAreaView style={{ flex: 1 }}>
   <Tab.Navigator
     screenOptions={({ route }) => ({
       headerShown: false,
@@ -69,6 +70,7 @@ const AppTabNavigator = () => (
     <Tab.Screen name="Caixa de Entrada" component={HomeStackNavigator} />
     <Tab.Screen name="Minha Carteira" component={WalletStackNavigator} />
   </Tab.Navigator>
+  </SafeAreaView>
 );
 
 // --- NAVEGADOR RAIZ (ATUALIZADO) ---

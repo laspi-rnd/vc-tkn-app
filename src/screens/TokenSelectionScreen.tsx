@@ -10,7 +10,7 @@ import { Svg, Path } from 'react-native-svg';
 import { useUser, AuthorizationRequest, UserToken, TokenType } from '../contexts/UserContext';
 import { HomeStackParamList } from '../../App';
 import AppIcon from '../components/AppIcon';
-import { save, getValueFor } from '../services/secureStorage';
+import { save, getValueFor, deleteValueFor } from '../services/secureStorage';
 import { submitAuthorization } from '../services/authService';
 
 type TokenSelectionScreenRouteProp = RouteProp<HomeStackParamList, 'TokenSelection'>;
@@ -61,7 +61,7 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
         const newTokensToStore: UserToken[] = request.tokenDetails
           ?.filter((td: TokenType) => selectedTokenIds.includes(td.code))
           .map((td: TokenType) => ({
-            id: <td className="c"></td>,
+            id: Math.random().toString(36).substring(2),
             type: td.name,
             status: 'Válido',
             issuer: request.mensagem,
