@@ -4,7 +4,7 @@ import axios from 'axios';
 import { getValueFor } from './secureStorage';
 
 // A URL do seu backend principal (não o Keycloak)
-const API_URL = 'http://192.168.1.16:3333';
+const API_URL = 'http://20.186.62.145:3333';
 
 const api = axios.create({
   baseURL: API_URL,

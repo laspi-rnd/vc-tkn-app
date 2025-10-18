@@ -7,11 +7,11 @@ import { User, AuthorizationRequest, TokenType } from '../contexts/UserContext';
 import api from './api';
 
 // --- Variáveis de Autenticação ---
-const KEYCLOAK_BASE_URL = 'http://192.168.1.16:8080/realms/oauth2-demo/protocol/openid-connect';
+const KEYCLOAK_BASE_URL = 'http://20.186.62.145:8080/realms/oauth2-demo/protocol/openid-connect';
 export const KEYCLOAK_CLIENT_ID = 'oauth2-demo-client';
 WebBrowser.maybeCompleteAuthSession();
 export const discovery = { authorizationEndpoint: `${KEYCLOAK_BASE_URL}/auth`, tokenEndpoint: `${KEYCLOAK_BASE_URL}/token` };
-export const redirectUri = makeRedirectUri({ scheme: 'vctkapp' });
+export const redirectUri = makeRedirectUri({ scheme: 'vctkapp', });
 
 console.log('>>>>>> URI DE REDIRECIONAMENTO SENDO USADA:', redirectUri);
 
@@ -61,11 +61,16 @@ export const getTokenTypes = async (): Promise<TokenType[]> => {
  * Submete a autorização para uma solicitação específica.
  */
 export const submitAuthorization = async (payload: any): Promise<{ success: boolean }> => {
-    console.log("Enviando autorização para o backend:", payload);
-    // Em um app real, esta seria a chamada para a API
-    // await api.post('/clients/authorize-request', payload);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    return { success: true };
+  console.log("Enviando autorização para o backend:", payload);
+  try {
+    const auth_payload = { hashAA_If : payload, autorizadoCriacaoVc : true, autorizados : [], autorizadosEmissao : [] };
+    console.log("Payload de autorização final:", auth_payload);
+    const response = await api.post('/client/authorize-if', auth_payload);
+    return response.data || [];
+  } catch (error) {
+    console.error("Erro ao autorizar solicitações:", error);
+    throw new Error("Não foi possível autorizar a solicitação.");
+  }
 };
 
 // --- Funções Mantidas (fluxo de cadastro e login) ---
@@ -81,7 +86,7 @@ export const registerUserWithIF = async (userData: Omit<User, 'hashAA'>, passwor
  */
 export const verifyIfRequestForRegistration = async (cpf: string, dateOfBirth: string): Promise<{ hashAA_If: string }> => {
   try {
-    const response = await axios.post('http://192.168.1.16:3333/client/verify-if-request', {
+    const response = await axios.post('http://20.186.62.145:3333/client/verify-if-request', {
       cpfCnpjDoc: cpf.replace(/\D/g, ''),
       dataNascimentoFundacao: dateOfBirth,
     });

@@ -14,6 +14,7 @@ import { save, getValueFor, deleteValueFor } from '../services/secureStorage';
 import { exchangeCodeAsync, AuthSessionResult } from 'expo-auth-session';
 import { jwtDecode } from 'jwt-decode';
 
+
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 interface Props { navigation: LoginScreenNavigationProp; }
 
@@ -31,6 +32,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         setIsLoading(true);
         try {
           if (!request?.codeVerifier) throw new Error("Verificador PKCE não encontrado.");
+          console.log('redirectUri gerada:', redirectUri);
           
           setLoadingMessage('A verificar sessão...');
           const tokenResult = await exchangeCodeAsync({
@@ -56,7 +58,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           if (pendingAuthHash) {
             setLoadingMessage('A autorizar criação da carteira...');
             await submitAuthorization(pendingAuthHash);
-            await deleteValueFor('pendingFirstLoginAuth');
             
             setLoadingMessage('A aguardar criação da carteira...');
             await new Promise(resolve => setTimeout(resolve, 3000)); // Simula 3s para criação da VC
