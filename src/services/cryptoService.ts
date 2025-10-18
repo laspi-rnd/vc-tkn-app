@@ -13,6 +13,7 @@ export const processQRCodeAndSendHashAA = async (qrCodeData: string, userHashAA:
   try {
     // Etapa 1: Parse do QR code
     const request = JSON.parse(qrCodeData);
+    console.log('Dados do QR code recebidos:', request);
     const { callbackUrl, publicKey: publicKeyJwk, requestId } = request;
 
     if (!callbackUrl || !publicKeyJwk || !requestId) {
@@ -33,14 +34,14 @@ export const processQRCodeAndSendHashAA = async (qrCodeData: string, userHashAA:
 
     // Etapa 3: Criptografar o hashAA usando a chave pública PEM
     // A biblioteca react-native-rsa-native já retorna o resultado em base64.
-    const encryptedHashAA = await RSA.encrypt(userHashAA, publicKeyPem);
+    //const encryptedHashAA = await RSA.encrypt(userHashAA, publicKeyPem);
     console.log('HashAA criptografado com sucesso.');
 
 
     // Etapa 4: Enviar o hashAA criptografado para o callbackUrl
     console.log('Enviando para o callback...');
     const response = await axios.post(callbackUrl, {
-      encryptedHashAA: encryptedHashAA,
+      encryptedHashAA: userHashAA, // não usar encryptedHashAA para testes
       timestamp: new Date().toISOString(),
     });
 
