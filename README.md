@@ -80,9 +80,50 @@ Siga os passos abaixo para configurar e rodar o ambiente de desenvolvimento loca
     * Escaneie o QR code (no iOS, use o app de Câmera; no Android, use a opção de scan dentro do Expo Go).
     * O aplicativo será compilado e carregado no seu celular. Qualquer alteração que você fizer no código será refletida em tempo real!
 
-## 🔐 Mocks e Credenciais de Teste
+### Build do Aplicativo
 
-Este projeto utiliza dados totalmente simulados (mockados) para todas as funcionalidades. Para testar o fluxo de login, utilize as seguintes credenciais:
+#### Pré-requisitos
 
-* **CPF:** `123.456.789-00`
-* **Senha:** `12345678`
+Docker instalado e em execução na sua máquina.
+
+Passos
+
+1. Preparação
+
+Copie os arquivos Dockerfile e build.sh para a pasta raiz do seu projeto React Native.
+
+/seu-projeto-react-native
+|-- android/
+|-- ios/
+|-- src/
+|-- package.json
+|-- Dockerfile      <-- Adicione este arquivo aqui
+|-- build.sh        <-- Adicione este arquivo aqui
+
+
+2. Construa a Imagem Docker
+
+```bash
+docker build -t react-native-builder .
+```
+
+3. Execute o Build do APK
+
+Depois que a imagem for construída com sucesso, execute o seguinte comando para iniciar um container, compilar seu projeto e gerar o APK:
+
+```bash
+docker run --rm -v $(pwd):/app -v $(pwd)/build:/app/build react-native-builder
+```
+
+4. Encontre seu APK
+
+Ao final do processo, uma nova pasta build/apk/ será criada na raiz do seu projeto, e dentro dela você encontrará o app-release.apk pronto para ser distribuído.
+
+/seu-projeto-react-native
+|-- build/
+|   |-- apk/
+|       |-- app-release.apk   <-- SEU APK ESTÁ AQUI!
+|-- android/
+|-- ...
+
+Pronto! Agora você tem um processo de build que pode ser facilmente replicado em qualquer máquina que tenha Docker.
