@@ -28,7 +28,7 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
   const { removeNotification } = useUser();
   
   const [selectedTokenIds, setSelectedTokenIds] = useState<number[]>(() => 
-    request.tokenDetails?.filter(t => t.obrigatorio).map(t => t.id) || []
+    request.tokenDetails?.filter((t: TokenType) => t.required).map((t: TokenType) => t.code) || []
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,8 +44,10 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
     setIsLoading(true);
     try {
       const payload = {
-          solicitacao_id: request.solicitacao_id,
-          autorizados: selectedTokenIds,
+          hashAA_If: request.hashAA_If,
+          autorizados: request.requestType === 'query' ? selectedTokenIds : [],
+          autorizadosEmissao: request.requestType === 'issuance' ? selectedTokenIds : [],
+          autorizadoCriacaoVc: request.criacaoVc
       };
       await submitAuthorization(payload);
 
@@ -57,10 +59,10 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
         expiryDate.setFullYear(now.getFullYear() + 2);
 
         const newTokensToStore: UserToken[] = request.tokenDetails
-          ?.filter(td => selectedTokenIds.includes(td.id))
-          .map(td => ({
-            id: td.id,
-            type: td.tipo,
+          ?.filter((td: TokenType) => selectedTokenIds.includes(td.code))
+          .map((td: TokenType) => ({
+            id: <td className="c"></td>,
+            type: td.name,
             status: 'Válido',
             issuer: request.mensagem,
             issueDate: now.toISOString().split('T')[0],
@@ -79,7 +81,7 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
       }
 
       removeNotification(request.solicitacao_id);
-      const authorizedTokenNames = request.tokenDetails?.filter(td => selectedTokenIds.includes(td.id)).map(td => td.tipo) || [];
+      const authorizedTokenNames = request.tokenDetails?.filter((td: TokenType) => selectedTokenIds.includes(td.code)).map((td: TokenType) => td.name) || [];
       navigation.replace('AuthorizationConfirmed', { authorizedTokens: authorizedTokenNames });
 
     } catch (error: any) {
@@ -95,8 +97,16 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
       `Tem a certeza de que deseja excluir esta solicitação de "${request.mensagem}"?`,
       [
         { text: "Cancelar", style: "cancel" },
-        { text: "Excluir", style: "destructive", onPress: () => {
-            removeNotification(request.solicitacao_id);
+        { text: "Excluir", style: "destructive", onPress: async () => {
+            const refusePayload = {
+              hashAA_If: request.hashAA_If,
+              autorizados: [],
+              autorizadosEmissao: [],
+              autorizadoCriacaoVc: false
+            };
+            const result = await submitAuthorization(refusePayload);
+            console.log("Resultado da submissão da autorização:", result);
+            if(result.success) removeNotification(request.solicitacao_id);
             navigation.goBack();
           } 
         }
@@ -105,24 +115,23 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const renderTokenItem = ({ item }: { item: TokenType }) => {
-    const isSelected = selectedTokenIds.includes(item.id);
+    const isSelected = selectedTokenIds.includes(item.code);
     return (
       <TouchableOpacity 
         style={styles.tokenItem} 
-        onPress={() => !item.obrigatorio && toggleTokenSelection(item.id)}
-        activeOpacity={item.obrigatorio ? 1 : 0.7}
+        onPress={() => !item.required && toggleTokenSelection(item.code)}
+        activeOpacity={item.required ? 1 : 0.7}
       >
         <CheckboxIcon checked={isSelected} />
         <View style={styles.tokenTextContainer}>
           <View style={styles.tokenNameContainer}>
-            <Text style={styles.tokenName}>{item.tipo}</Text>
-            {item.obrigatorio ? (
+            <Text style={styles.tokenName}>{item.name}</Text>
+            {item.required ? (
               <View style={styles.requiredBadge}><Text style={styles.badgeText}>Obrigatório</Text></View>
             ) : (
               <View style={[styles.requiredBadge, styles.optionalBadge]}><Text style={styles.badgeText}>Opcional</Text></View>
             )}
           </View>
-          <Text style={styles.tokenDescription}>{item.descricao}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -145,7 +154,7 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
       <FlatList
         data={request.tokenDetails}
         renderItem={renderTokenItem}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={item => item.code.toString()}
         contentContainerStyle={styles.listContainer}
       />
       <View style={styles.footer}>

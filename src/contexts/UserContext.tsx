@@ -4,10 +4,10 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Tipagem para um único tipo de token vindo da API (/client/get-token-types)
 export interface TokenType {
-  id: number;
-  descricao: string;
-  tipo: string;
-  obrigatorio: boolean;
+  code: number;
+  name : string;
+  required?: [string];
+  extra?:[string];
 }
 
 // Tipagem para os tokens que serão guardados na carteira do utilizador
@@ -26,6 +26,9 @@ export type AuthorizationRequest = {
   mensagem: string; // Ex: "Processo 123, Empresa Um"
   data_pedido: string;
   solicitados: number[]; // Lista de IDs de tipos de token
+  solicitadosEmissao: number[]; // IDs dos tokens solicitados para emissão
+  hashAA_IF: string;
+  criacaoVc: boolean;
   
   // Campos que adicionaremos no frontend para facilitar a renderização
   tokenDetails?: TokenType[];

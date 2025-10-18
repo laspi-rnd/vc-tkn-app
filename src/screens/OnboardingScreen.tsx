@@ -29,7 +29,10 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     const checkFirstLogin = async () => {
       const firstLoginCompleted = await getValueFor('firstLoginCompleted');
       if (firstLoginCompleted === 'true') {
-        navigation.navigate('Login')
+        navigation.dispatch(CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        }));  
         return;
       }
     };

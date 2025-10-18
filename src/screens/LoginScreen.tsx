@@ -57,7 +57,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           const pendingAuthHash = await getValueFor('pendingFirstLoginAuth');
           if (pendingAuthHash) {
             setLoadingMessage('A autorizar criação da carteira...');
-            await submitAuthorization(pendingAuthHash);
+            const authorizationPayload = { hashAA_If : pendingAuthHash, autorizadoCriacaoVc : true, autorizados : [], autorizadosEmissao : [] };
+            await submitAuthorization(authorizationPayload);
             
             setLoadingMessage('A aguardar criação da carteira...');
             await new Promise(resolve => setTimeout(resolve, 3000)); // Simula 3s para criação da VC

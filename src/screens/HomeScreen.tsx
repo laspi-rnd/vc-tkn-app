@@ -37,16 +37,20 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             getVerificationRequests()
           ]);
           
+          console.log("Fetched Token Types:", tokenTypes);
+          console.log("Fetched Requests:", requests);
+
           const tokenTypesMap = new Map<number, TokenType>();
-          tokenTypes.forEach(type => tokenTypesMap.set(type.id, type));
+          tokenTypes.forEach(type => tokenTypesMap.set(type.code, type));
 
           // Enriquece cada solicitação com os detalhes dos tokens
           const enrichedRequests = requests.map(req => {
-            const tokenDetails = req.solicitados.map(tokenId => tokenTypesMap.get(tokenId)).filter(Boolean) as TokenType[];
+
+            const tokenDetails = req.solicitados.length > req.solicitadosEmissao.length ? req.solicitados.map(tokenId => tokenTypesMap.get(tokenId)) as TokenType[] : req.solicitadosEmissao.map(tokenId => tokenTypesMap.get(tokenId)) as TokenType[];
             
             // Lógica para inferir o tipo de requisição (pode precisar de ajuste)
             // Exemplo: se algum token tiver 'Consulta' no nome, é 'query'
-            const isQuery = tokenDetails.some(td => td.tipo.toLowerCase().includes('consulta'));
+            const isQuery = tokenDetails.some(td => req.solicitados.length > req.solicitadosEmissao.length);
 
             return {
               ...req,
@@ -54,6 +58,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               requestType: isQuery ? 'query' : 'issuance',
             } as AuthorizationRequest;
           });
+
+          console.log("Enriched Requests:", enrichedRequests);
 
           setNotifications(enrichedRequests);
         } catch (error: any) {

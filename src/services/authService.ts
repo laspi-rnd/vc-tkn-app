@@ -63,9 +63,8 @@ export const getTokenTypes = async (): Promise<TokenType[]> => {
 export const submitAuthorization = async (payload: any): Promise<{ success: boolean }> => {
   console.log("Enviando autorização para o backend:", payload);
   try {
-    const auth_payload = { hashAA_If : payload, autorizadoCriacaoVc : true, autorizados : [], autorizadosEmissao : [] };
-    console.log("Payload de autorização final:", auth_payload);
-    const response = await api.post('/client/authorize-if', auth_payload);
+    console.log("Payload de autorização final:", payload);
+    const response = await api.post('/client/authorize-if', payload);
     return response.data || [];
   } catch (error) {
     console.error("Erro ao autorizar solicitações:", error);
