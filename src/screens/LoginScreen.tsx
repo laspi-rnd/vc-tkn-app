@@ -70,12 +70,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           }
 
           setLoadingMessage('A buscar a sua conta...');
-          const hashIf = await getValueFor('hashIf');
-          if (!hashIf) throw new Error("Identificador da instituição não encontrado. Por favor, complete o cadastro.");
-          
-          const accountData = await getMyAccount(hashIf);
-          
-          const finalUserData = { ...partialUserData, hashAA: accountData.hashAA };
+          const hashAA = await getValueFor('hashAA');
+          if (!hashAA) throw new Error("Identificador da conta não encontrado.");
+
+          const finalUserData = { ...partialUserData, hashAA };
           login(finalUserData);
           
           navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'App' }] }));

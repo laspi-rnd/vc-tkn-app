@@ -25,6 +25,15 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   const [decodedToken, setDecodedToken] = React.useState<Omit<User, 'hashAA' | 'email'> | null>(null);
 
   useEffect(() => {
+
+    const checkFirstLogin = async () => {
+      const firstLoginCompleted = await getValueFor('firstLoginCompleted');
+      if (firstLoginCompleted === 'true') {
+        navigation.navigate('Login')
+        return;
+      }
+    };
+
     if (initialUrl) {
       console.log("Deep link inicial recebido:", initialUrl);
       const { queryParams } = Linking.parse(initialUrl);
@@ -43,19 +52,11 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
         }
       }
     }
+
+    checkFirstLogin();
   }, [initialUrl]);
 
   const handleCreateAccount = async () => {
-
-    const firstLoginCompleted = await getValueFor('firstLoginCompleted');
-    if (firstLoginCompleted === 'true') {
-      navigation.dispatch(CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'App' }],
-      }));
-      return;
-    }
-
     if (!decodedToken) {
       Alert.alert("Link Inválido", "O link de convite é inválido ou expirou.");
       return;
