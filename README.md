@@ -112,6 +112,7 @@ docker build -t react-native-builder .
 Depois que a imagem for construída com sucesso, execute o seguinte comando para iniciar um container, compilar seu projeto e gerar o APK:
 
 ```bash
+npx expo prebuild --platform android
 docker run --rm -v $(pwd):/app -v $(pwd)/build:/app/build react-native-builder
 ```
 
