@@ -6,6 +6,7 @@ ARG JDK_VERSION=17
 ARG ANDROID_CMD_TOOLS="9477386"
 ARG ANDROID_BUILD_TOOLS="33.0.2"
 ARG ANDROID_PLATFORM="33"
+ARG CMAKE_VERSION="3.22.1"
 
 # Variáveis de ambiente
 ENV DEBIAN_FRONTEND="noninteractive"
@@ -41,7 +42,7 @@ RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
 
 # Aceita as licenças do Android SDK e instala as plataformas e ferramentas de build necessárias
 RUN yes | sdkmanager --licenses > /dev/null && \
-    sdkmanager "platforms;android-${ANDROID_PLATFORM}" "build-tools;${ANDROID_BUILD_TOOLS}" "platform-tools"
+    sdkmanager "platforms;android-${ANDROID_PLATFORM}" "build-tools;${ANDROID_BUILD_TOOLS}" "platform-tools" "cmake;${CMAKE_VERSION}"
 
 # --------------------
 # CONFIGURAÇÃO DO PROJETO
