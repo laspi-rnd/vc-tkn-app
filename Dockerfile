@@ -1,8 +1,3 @@
-#
-# Dockerfile para criar um ambiente de build para React Native (Android)
-#
-
-# Define a imagem base (Ubuntu 20.04 LTS)
 FROM ubuntu:20.04
 
 # Argumentos para configurar as versões das ferramentas (pode ser alterado no build)
