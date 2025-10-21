@@ -69,12 +69,14 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
             expiryDate: expiryDate.toISOString().split('T')[0],
           })) || [];
 
-        const updatedTokens = [...currentlyStoredTokens];
-        newTokensToStore.forEach(newToken => {
-            if (!updatedTokens.some(existingToken => existingToken.id === newToken.id)) {
-                updatedTokens.push(newToken);
-            }
+        const updatedTokens = currentlyStoredTokens.map(token => {
+          if (newTokensToStore.some(newToken => newToken.type === token.type)) {
+            return { ...token, status: 'Expirado' };
+          }
+          return token;
         });
+
+        updatedTokens.push(...newTokensToStore);
         
         await save('userWalletTokens', JSON.stringify(updatedTokens));
         console.log('Novos tokens guardados na carteira!');
