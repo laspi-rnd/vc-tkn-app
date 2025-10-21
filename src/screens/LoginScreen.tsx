@@ -35,14 +35,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           console.log('redirectUri gerada:', redirectUri);
           
           setLoadingMessage('A verificar sessão...');
-          const tokenResult = await exchangeCodeAsync({
+            const tokenResult = await exchangeCodeAsync({
             clientId: KEYCLOAK_CLIENT_ID, code, redirectUri,
             extraParams: { code_verifier: request.codeVerifier },
-          }, discovery);
-
-          await save('accessToken', tokenResult.accessToken);
-          await save('refreshToken', tokenResult.refreshToken);
-          const decodedToken: any = jwtDecode(tokenResult.accessToken);
+            }, discovery);
+            
+            const { accessToken, refreshToken, idToken, expiresIn } = tokenResult;
+            await save('OAuthJWT', JSON.stringify({ accessToken, refreshToken, idToken, expiresIn: expiresIn?.toString() || 15 }));
+            const decodedToken: any = jwtDecode(accessToken);
 
           // Salva os dados parciais do usuário no contexto para a próxima tela
           const partialUserData = {

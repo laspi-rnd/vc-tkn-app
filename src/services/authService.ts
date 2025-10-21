@@ -7,8 +7,10 @@ import { User, AuthorizationRequest, TokenType } from '../contexts/UserContext';
 import api from './api';
 
 // --- Variáveis de Autenticação ---
-const KEYCLOAK_BASE_URL = 'http://20.186.62.145:8080/realms/oauth2-demo/protocol/openid-connect';
-export const KEYCLOAK_CLIENT_ID = 'oauth2-demo-client';
+const KEYCLOAK_ISSUER = process.env.KEYCLOAK_ISSUER || 'http://20.186.62.145:8080/realms/oauth2-demo/';
+export const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID! || 'oauth2-demo-client';
+
+const KEYCLOAK_BASE_URL = `${KEYCLOAK_ISSUER}/protocol/openid-connect`;
 WebBrowser.maybeCompleteAuthSession();
 export const discovery = { authorizationEndpoint: `${KEYCLOAK_BASE_URL}/auth`, tokenEndpoint: `${KEYCLOAK_BASE_URL}/token` };
 export const redirectUri = makeRedirectUri({ scheme: 'vctkapp', });
