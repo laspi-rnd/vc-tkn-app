@@ -16,7 +16,7 @@ export const processQRCodeAndSendHashAA = async (qrCodeData: string, userHashAA:
     console.log('Dados do QR code recebidos:', request);
     const { callbackUrl, publicKey: publicKeyJwk, requestId } = request;
 
-    if (!callbackUrl || !publicKeyJwk || !requestId) {
+    if (!callbackUrl || !requestId) {
       throw new Error("Dados do QR code inválidos ou incompletos.");
     }
 
@@ -25,11 +25,11 @@ export const processQRCodeAndSendHashAA = async (qrCodeData: string, userHashAA:
 
     // Etapa 2: Converter a chave pública de JWK para o formato PEM
     // A biblioteca 'jwk-to-pem' requer que o JWK seja do tipo 'any'
-    const publicKeyPem = jwkToPem(publicKeyJwk as any);
-    if (!publicKeyPem) {
-        throw new Error("Falha ao converter a chave pública JWK para PEM.");
-    }
-    console.log('Chave pública convertida para PEM com sucesso.');
+    //const publicKeyPem = jwkToPem(publicKeyJwk as any);
+    //if (!publicKeyPem) {
+    //    throw new Error("Falha ao converter a chave pública JWK para PEM.");
+    //}
+    //console.log('Chave pública convertida para PEM com sucesso.');
 
 
     // Etapa 3: Criptografar o hashAA usando a chave pública PEM
