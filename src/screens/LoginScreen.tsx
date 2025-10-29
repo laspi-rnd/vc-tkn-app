@@ -11,8 +11,9 @@ import { useUser } from '../contexts/UserContext';
 import { CommonActions } from '@react-navigation/native';
 import { useKeycloakAuth, getMyAccount, submitAuthorization, discovery, KEYCLOAK_CLIENT_ID, redirectUri } from '../services/authService';
 import { save, getValueFor, deleteValueFor } from '../services/secureStorage';
-import { exchangeCodeAsync, AuthSessionResult } from 'expo-auth-session';
+import { exchangeCodeAsync, AuthSessionResult, TokenResponseConfig } from 'expo-auth-session';
 import { jwtDecode } from 'jwt-decode';
+import { create } from 'react-native/types_generated/Libraries/ReactNative/ReactFabricPublicInstance/ReactNativeAttributePayload';
 
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -39,10 +40,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             clientId: KEYCLOAK_CLIENT_ID, code, redirectUri,
             extraParams: { code_verifier: request.codeVerifier },
             }, discovery);
-            
-            const { accessToken, refreshToken, idToken, expiresIn } = tokenResult;
-            await save('OAuthJWT', JSON.stringify({ accessToken, refreshToken, idToken, expiresIn: expiresIn?.toString() || 15 }));
-            const decodedToken: any = jwtDecode(accessToken);
+
+            const tokenConfig : TokenResponseConfig = tokenResult?.getRequestConfig();
+
+            await save('OAuthJWT', JSON.stringify(tokenConfig));
+            const decodedToken: any = jwtDecode(tokenConfig.accessToken);
 
           // Salva os dados parciais do usuário no contexto para a próxima tela
           const partialUserData = {

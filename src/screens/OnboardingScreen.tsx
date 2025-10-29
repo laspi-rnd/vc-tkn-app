@@ -21,7 +21,7 @@ interface Props { navigation: OnboardingScreenNavigationProp; }
 
 const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   
-  const initialUrl = Linking.useURL();
+  const initialUrl = Linking.useLinkingURL();
   const [decodedToken, setDecodedToken] = React.useState<Omit<User, 'hashAA' | 'email'> | null>(null);
 
   useEffect(() => {

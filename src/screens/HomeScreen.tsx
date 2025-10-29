@@ -32,10 +32,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         setIsLoadingNotifications(true);
         try {
           // Busca os tipos de token e as solicitações em paralelo
-          const [tokenTypes, requests] = await Promise.all([
-            getTokenTypes(),
-            getVerificationRequests()
-          ]);
+          const tokenTypes = await getTokenTypes();
+          const requests = await getVerificationRequests();
           
           console.log("Fetched Token Types:", tokenTypes);
           console.log("Fetched Requests:", requests);
