@@ -8,6 +8,7 @@ import { useUser, UserToken } from '../contexts/UserContext';
 import { colors, spacing, typography } from '../theme/theme';
 import { WalletStackParamList } from '../../App';
 import { getValueFor, save } from '../services/secureStorage';
+import { getUserTokens } from '../services/authService';
 
 type WalletScreenNavigationProp = NativeStackNavigationProp<WalletStackParamList, 'Wallet'>;
 interface Props { navigation: WalletScreenNavigationProp; }
@@ -23,27 +24,9 @@ const WalletScreen: React.FC<Props> = ({ navigation }) => {
   const fetchTokens = async () => {
     setIsLoading(true);
     try {
-      const storedTokensString = await getValueFor('userWalletTokens');
-      const storedTokens: UserToken[] = storedTokensString ? JSON.parse(storedTokensString) : [];
+      const fetchedTokens = await getUserTokens();
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      let tokensUpdated = false;
-      const validatedTokens = storedTokens.map(token => {
-        const expiryDate = new Date(token.expiryDate);
-        if (expiryDate < today && token.status === 'Válido') {
-          tokensUpdated = true;
-          return { ...token, status: 'Expirado' };
-        }
-        return token;
-      });
-
-      if (tokensUpdated) {
-        await save('userWalletTokens', JSON.stringify(validatedTokens));
-      }
-
-      setTokens(validatedTokens);
+      setTokens(fetchedTokens);
     } catch (error) {
       console.error("Erro ao carregar tokens da carteira:", error);
     } finally {
@@ -59,31 +42,38 @@ const WalletScreen: React.FC<Props> = ({ navigation }) => {
 
   const filteredTokens = useMemo(() => {
     if (activeFilter === 'Válidos') {
-      return tokens.filter(token => token.status === 'Válido');
+      return tokens.filter(token => {
+        const today = new Date();
+        const expirationDate = new Date(token.vencimento);
+        return expirationDate >= today;
+      });
     }
     if (activeFilter === 'Expirados') {
-      return tokens.filter(token => token.status === 'Expirado' || token.status === 'Revogado');
+      return tokens.filter(token => {
+        const today = new Date();
+        const expirationDate = new Date(token.vencimento);
+        return expirationDate < today;
+      });
     }
     return tokens;
   }, [tokens, activeFilter]);
 
-  const getStatusStyle = (status: UserToken['status']) => {
-    if (status === 'Válido') return styles.statusValid;
-    if (status === 'Expirado') return styles.statusExpired;
-    if (status === 'Revogado') return styles.statusRevoked;
+  const getStatusStyle = (vencimento : UserToken['vencimento']) => {
+    if (new Date(vencimento) >= new Date()) return styles.statusValid;
+    if (new Date(vencimento) < new Date()) return styles.statusExpired;
     return {};
   };
 
   const renderTokenItem = ({ item }: { item: UserToken }) => (
     <TouchableOpacity style={styles.tokenCard} onPress={() => navigation.navigate('TokenDetail', { token: item })}>
       <View style={styles.cardHeader}>
-        <Text style={styles.tokenType}>{item.type}</Text>
-        <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+        <Text style={styles.tokenType}>{item.nome}</Text>
+        <View style={[styles.statusBadge, getStatusStyle(item.vencimento)]}>
+          <Text style={styles.statusText}>{new Date(item.vencimento) >= new Date() ? "Válido" : "Expirado"}</Text>
         </View>
       </View>
-      <Text style={styles.tokenInfo}>Emissora: {item.issuer}</Text>
-      <Text style={styles.tokenInfo}>Data de Emissão: {item.issueDate}</Text>
+      <Text style={styles.tokenInfo}>Emissora: {item.emissor}</Text>
+      <Text style={styles.tokenInfo}>Data de Emissão: {item.emissao}</Text>
     </TouchableOpacity>
   );
 
@@ -91,7 +81,7 @@ const WalletScreen: React.FC<Props> = ({ navigation }) => {
     return <SafeAreaView style={styles.loadingContainer}><ActivityIndicator size="large" /></SafeAreaView>;
   }
 
-  const validTokens = tokens.filter(t => t.status === 'Válido').length;
+  const validTokens = tokens.filter(t => new Date(t.vencimento) >= new Date()).length;
   const expiredOrRevokedTokens = tokens.length - validTokens;
 
   return (

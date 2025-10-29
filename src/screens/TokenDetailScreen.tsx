@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { UserToken } from '../data/mockData';
+import { UserToken } from '../contexts/UserContext';
 import { colors, spacing, typography } from '../theme/theme';
 
 type RootStackParamList = {
@@ -40,18 +40,19 @@ const TokenDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>{token.type}</Text>
+        <Text style={styles.title}>{token.nome}</Text>
         <View style={styles.card}>
-          <DetailRow label="Status" value={token.status} />
-          <DetailRow label="Validade" value={token.expiryDate} />
-          <DetailRow label="IF Emissora" value={token.issuer} />
-          <DetailRow label="Data de Emissão" value={token.issueDate} />
-          <DetailRow label="Resultado da Compliance" value={token.complianceResult} />
-          <DetailRow label="Anotações" value={token.notes} />
+          <DetailRow label="Status" value={new Date(token.vencimento) >= new Date() ? "Válido" : "Expirado"} />
+          <DetailRow label="Validade" value={token.vencimento} />
+          <DetailRow label="IF Emissora" value={token.emissor} />
+          <DetailRow label="Data de Emissão" value={token.emissao} />
+          <DetailRow label="Resultado da Compliance" value={token.result ? "Aprovado" : "Reprovado"} />
         </View>
         <Text style={styles.sectionTitle}>Informações Técnicas</Text>
         <View style={styles.card}>
           <DetailRow label="ID do Token" value={token.id} />
+          <DetailRow label="Anotações" value={token.detalhes} />
+          <DetailRow label="Comentários Adicionais" value={token.comentarios} />
         </View>
       </ScrollView>
     </SafeAreaView>

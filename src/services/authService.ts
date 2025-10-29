@@ -74,6 +74,20 @@ export const submitAuthorization = async (payload: any): Promise<{ success: bool
   }
 };
 
+/**
+ * Recupera os tokens do utilizador autenticado.
+ */
+export const getUserTokens = async (): Promise<any[]> => {
+  try {
+    console.log("Buscando tokens do utilizador...");
+    const response = await api.post('/client/get-my-tokens', {});
+    return response.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar tokens do utilizador:", error);
+    throw new Error("Não foi possível carregar os tokens do utilizador.");
+  }
+};
+
 // --- Funções Mantidas (fluxo de cadastro e login) ---
 
 export const registerUserWithIF = async (userData: Omit<User, 'hashAA'>, password: string): Promise<{ success: boolean }> => {

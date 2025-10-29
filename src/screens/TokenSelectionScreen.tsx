@@ -51,37 +51,6 @@ const TokenSelectionScreen: React.FC<Props> = ({ route, navigation }) => {
       };
       await submitAuthorization(payload);
 
-      if (request.requestType === 'issuance') {
-        const currentlyStoredTokens: UserToken[] = JSON.parse(await getValueFor('userWalletTokens') || '[]');
-        
-        const now = new Date();
-        const expiryDate = new Date();
-        expiryDate.setFullYear(now.getFullYear() + 2);
-
-        const newTokensToStore: UserToken[] = request.tokenDetails
-          ?.filter((td: TokenType) => selectedTokenIds.includes(td.code))
-          .map((td: TokenType) => ({
-            id: Math.random().toString(36).substring(2),
-            type: td.name,
-            status: 'Válido',
-            issuer: request.mensagem,
-            issueDate: now.toISOString().split('T')[0],
-            expiryDate: expiryDate.toISOString().split('T')[0],
-          })) || [];
-
-        const updatedTokens = currentlyStoredTokens.map(token => {
-          if (newTokensToStore.some(newToken => newToken.type === token.type)) {
-            return { ...token, status: 'Expirado' };
-          }
-          return token;
-        });
-
-        updatedTokens.push(...newTokensToStore);
-        
-        await save('userWalletTokens', JSON.stringify(updatedTokens));
-        console.log('Novos tokens guardados na carteira!');
-      }
-
       removeNotification(request.solicitacao_id);
       const authorizedTokenNames = request.tokenDetails?.filter((td: TokenType) => selectedTokenIds.includes(td.code)).map((td: TokenType) => td.name) || [];
       navigation.replace('AuthorizationConfirmed', { authorizedTokens: authorizedTokenNames });

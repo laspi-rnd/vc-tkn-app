@@ -13,11 +13,14 @@ export interface TokenType {
 // Tipagem para os tokens que serão guardados na carteira do utilizador
 export interface UserToken {
   id: number; // Corresponde ao id do TokenType
-  type: string; // Corresponde ao 'tipo' do TokenType
-  status: 'Válido' | 'Expirado' | 'Revogado';
-  issuer: string; // A 'mensagem' da solicitação original, que contém o nome da IF
-  issueDate: string; // Data em que foi emitido (formato YYYY-MM-DD)
-  expiryDate: string; // Data de validade (formato YYYY-MM-DD)
+  result: boolean; // Resultado da verificação
+  emissor: string; // O emissor do token
+  emissao: string; // Data de emissão (formato YYYY-MM-DD)
+  vencimento: string; // Data de validade (formato YYYY-MM-DD)
+  tipo: string; // Tipo do token
+  comentarios: string; // Comentários adicionais
+  detalhes: string; // Detalhes adicionais
+  nome: string; // Nome do token
 }
 
 // Tipagem para uma solicitação vinda da API (/clients/verify-if-requests)
