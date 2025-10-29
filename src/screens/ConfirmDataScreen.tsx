@@ -7,6 +7,10 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import CustomButton from '../components/CustomButton';
 import { colors, spacing, typography } from '../theme/theme';
+import { save } from '../services/secureStorage';
+import { registerUserWithIF, verifyIfRequestForRegistration } from '../services/authService';
+
+
 
 type ConfirmDataScreenRouteProp = RouteProp<RootStackParamList, 'ConfirmData'>;
 type ConfirmDataScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ConfirmData'>;
@@ -32,7 +36,7 @@ const ConfirmDataScreen: React.FC<Props> = ({ route, navigation }) => {
     setCpfInput(formatted.slice(0, 14));
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     // Compara o CPF digitado com o CPF vindo do deep link (sem formatação)
     if (cpfInput.replace(/\D/g, '') !== userData.cpf) {
       Alert.alert("CPF Inválido", "O CPF digitado não confere com o do seu convite.");
@@ -41,10 +45,26 @@ const ConfirmDataScreen: React.FC<Props> = ({ route, navigation }) => {
 
     // Se a validação for bem-sucedida, navega para a criação de senha,
     // passando todos os dados do usuário, agora com o CPF formatado.
-    navigation.navigate('CreatePassword', {
-      // Adiciona um email mockado, já que ele não vem no link
-      userData: { ...userData, cpf: cpfInput, email: 'mock@email.com' } 
-    });
+    // navigation.navigate('CreatePassword', {
+    //   // Adiciona um email mockado, já que ele não vem no link
+    //   userData: { ...userData, cpf: cpfInput, email: 'mock@email.com' } 
+    // });
+
+    // ETAPA 2: Chama o backend para obter o hashAA da IF
+    const { hashAA_If } = await verifyIfRequestForRegistration(userData.cpf, userData.dateOfBirth);
+    console.log("hashAA_If recebido:", hashAA_If);
+    if (!hashAA_If) throw new Error("Não foi possível obter o identificador da instituição.");
+
+    // ETAPA 3: Salva o hashAA_If para ser usado no primeiro login
+    await save('pendingFirstLoginAuth', hashAA_If);
+    console.log('hashAA_If salvo com sucesso para o primeiro login:', hashAA_If);
+
+    // ETAPA 4: Mostra mensagem de sucesso e redireciona para o Login
+    Alert.alert(
+      "Conta Criada com Sucesso!",
+      "Sua conta foi preparada. Agora, por favor, faça o login para finalizar a configuração.",
+      [{ text: "Ir para o Login", onPress: () => navigation.navigate('Login') }]
+    );
   };
 
   return (
