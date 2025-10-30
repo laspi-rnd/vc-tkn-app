@@ -2,10 +2,10 @@ FROM ubuntu:20.04
 
 # Argumentos para configurar as versões das ferramentas (pode ser alterado no build)
 ARG NODE_VERSION=22
-ARG JDK_VERSION=17
+ARG JDK_VERSION=21
 ARG ANDROID_CMD_TOOLS="9477386"
-ARG ANDROID_BUILD_TOOLS="33.0.2"
-ARG ANDROID_PLATFORM="33"
+ARG ANDROID_BUILD_TOOLS="35.0.0"
+ARG ANDROID_PLATFORM="35"
 ARG CMAKE_VERSION="3.22.1"
 
 # Variáveis de ambiente

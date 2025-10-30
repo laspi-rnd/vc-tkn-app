@@ -13,7 +13,7 @@ export const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID! || 'oauth2-dem
 const KEYCLOAK_BASE_URL = `${KEYCLOAK_ISSUER}/protocol/openid-connect`;
 WebBrowser.maybeCompleteAuthSession();
 export const discovery = { authorizationEndpoint: `${KEYCLOAK_BASE_URL}/auth`, tokenEndpoint: `${KEYCLOAK_BASE_URL}/token` };
-export const redirectUri = makeRedirectUri({ scheme: 'vctkapp', });
+export const redirectUri = makeRedirectUri({ scheme: 'vctkapp', path: 'redirect' });
 
 console.log('>>>>>> URI DE REDIRECIONAMENTO SENDO USADA:', redirectUri);
 

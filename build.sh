@@ -15,8 +15,9 @@ echo "--> Instalando dependências do npm..."
 npm install
 
 cd android
+rm -rf /root/.gradle/caches
 echo "--> Limpando build anterior do Gradle..."
-./gradlew clean
+#./gradlew clean
 
 echo "--> Gerando o APK de Release..."
 ./gradlew assembleRelease --no-daemon
